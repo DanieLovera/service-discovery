@@ -7,18 +7,23 @@ import (
 	"tpiii.local/daniel-tpiii/internal/logging"
 )
 
-const defaultLBHTTPAddress = "0.0.0.0:8080"
+const (
+	defaultLBHTTPAddress          = "0.0.0.0:8080"
+	defaultLBObservabilityAddress = "0.0.0.0:9101"
+)
 
 type LoadBalancer struct {
-	HTTPAddress       string
-	RegistryAddresses []string
-	Log               logging.Config
+	HTTPAddress          string
+	ObservabilityAddress string
+	RegistryAddresses    []string
+	Log                  logging.Config
 }
 
 func LoadLoadBalancer() (LoadBalancer, error) {
 	cfg := LoadBalancer{
-		HTTPAddress:       stringFromEnvOrDefault("LB_HTTP_ADDRESS", defaultLBHTTPAddress),
-		RegistryAddresses: splitCSV(os.Getenv("LB_REGISTRY_ADDRESSES")),
+		HTTPAddress:          stringFromEnvOrDefault("LB_HTTP_ADDRESS", defaultLBHTTPAddress),
+		ObservabilityAddress: stringFromEnvOrDefault("LB_OBSERVABILITY_ADDRESS", defaultLBObservabilityAddress),
+		RegistryAddresses:    splitCSV(os.Getenv("LB_REGISTRY_ADDRESSES")),
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("LB_LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("LB_LOG_FORMAT", "json"),

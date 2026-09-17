@@ -6,10 +6,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"tpiii.local/daniel-tpiii/internal/config"
 	"tpiii.local/daniel-tpiii/internal/logging"
+	"tpiii.local/daniel-tpiii/internal/metrics"
+	"tpiii.local/daniel-tpiii/internal/observability"
 )
+
+const shutdownTimeout = 5 * time.Second
 
 func main() {
 	if err := run(); err != nil {
@@ -19,18 +24,28 @@ func main() {
 }
 
 func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	cfg, err := config.LoadMockService()
 	if err != nil {
-		return fmt.Errorf("Load mock-service configuration: %w", err)
+		return fmt.Errorf("load mock-service configuration: %w", err)
 	}
 
 	logger, err := logging.New(cfg.Log)
 	if err != nil {
-		return fmt.Errorf("Initialize logger: %w", err)
+		return fmt.Errorf("initialize logger: %w", err)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	processMetrics := metrics.New("mock-service", cfg.InstanceID)
+
+	observabilityServer := observability.New(cfg.ObservabilityAddress, processMetrics.Handler(), logger)
+	go func() {
+		if err := observabilityServer.Start(); err != nil {
+			logger.Error("Observability server stopped", "error", err)
+		}
+	}()
+	observabilityServer.SetReady(true)
 
 	logger.Info(
 		"Mock Service process started",
@@ -38,8 +53,18 @@ func run() error {
 		"instance_id", cfg.InstanceID,
 		"http_address", cfg.HTTPAddress,
 	)
+
 	<-ctx.Done()
+
 	logger.Info("Mock Service process stopping")
+
+	observabilityServer.SetReady(false)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := observabilityServer.Shutdown(shutdownCtx); err != nil {
+		return err
+	}
 
 	return nil
 }

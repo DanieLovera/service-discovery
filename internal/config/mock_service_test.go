@@ -78,6 +78,10 @@ func TestLoadMockServiceUsesDefaults(t *testing.T) {
 		t.Errorf("HTTPAddress = %q, want %q", cfg.HTTPAddress, defaultMockHTTPAddress)
 	}
 
+	if cfg.ObservabilityAddress != defaultMockObservabilityAddress {
+		t.Errorf("ObservabilityAddress = %q, want %q", cfg.ObservabilityAddress, defaultMockObservabilityAddress)
+	}
+
 	if cfg.Weight != defaultWeight {
 		t.Errorf("Weight = %d, want %d", cfg.Weight, defaultWeight)
 	}

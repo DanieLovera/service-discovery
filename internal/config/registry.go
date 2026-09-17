@@ -9,22 +9,27 @@ import (
 	"tpiii.local/daniel-tpiii/internal/logging"
 )
 
-const defaultRegistryGRPCAddress = "0.0.0.0:7000"
+const (
+	defaultRegistryGRPCAddress          = "0.0.0.0:7000"
+	defaultRegistryObservabilityAddress = "0.0.0.0:9100"
+)
 
 type Registry struct {
-	NodeID         string
-	Backend        string
-	GRPCAddress    string
-	ClusterMembers []string
-	Log            logging.Config
+	NodeID               string
+	Backend              string
+	GRPCAddress          string
+	ObservabilityAddress string
+	ClusterMembers       []string
+	Log                  logging.Config
 }
 
 func LoadRegistry() (Registry, error) {
 	cfg := Registry{
-		NodeID:         strings.TrimSpace(os.Getenv("REGISTRY_INSTANCE_ID")),
-		Backend:        strings.ToLower(stringFromEnvOrDefault("REGISTRY_BACKEND", "ap")),
-		GRPCAddress:    stringFromEnvOrDefault("REGISTRY_GRPC_ADDRESS", defaultRegistryGRPCAddress),
-		ClusterMembers: splitCSV(os.Getenv("REGISTRY_CLUSTER_MEMBERS")),
+		NodeID:               strings.TrimSpace(os.Getenv("REGISTRY_INSTANCE_ID")),
+		Backend:              strings.ToLower(stringFromEnvOrDefault("REGISTRY_BACKEND", "ap")),
+		GRPCAddress:          stringFromEnvOrDefault("REGISTRY_GRPC_ADDRESS", defaultRegistryGRPCAddress),
+		ObservabilityAddress: stringFromEnvOrDefault("REGISTRY_OBSERVABILITY_ADDRESS", defaultRegistryObservabilityAddress),
+		ClusterMembers:       splitCSV(os.Getenv("REGISTRY_CLUSTER_MEMBERS")),
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("REGISTRY_LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("REGISTRY_LOG_FORMAT", "json"),

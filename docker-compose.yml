@@ -1,0 +1,61 @@
+services:
+  registry:
+    build:
+      context: .
+      args:
+        SERVICE: registry
+    environment:
+      REGISTRY_INSTANCE_ID: registry-1
+      REGISTRY_BACKEND: ap
+      REGISTRY_CLUSTER_MEMBERS: registry:7000
+    ports:
+      - "7000:7000"
+      - "9100:9100"
+
+  load-balancer:
+    build:
+      context: .
+      args:
+        SERVICE: load-balancer
+    environment:
+      LB_REGISTRY_ADDRESSES: registry:7000
+    ports:
+      - "8080:8080"
+      - "9101:9101"
+    depends_on:
+      - registry
+
+  mock-service:
+    build:
+      context: .
+      args:
+        SERVICE: mock-service
+    environment:
+      MS_NAME: example-service
+      MS_INSTANCE_ID: mock-service-1
+      MS_REGISTRY_ADDRESSES: registry:7000
+    ports:
+      - "9000:9000"
+      - "9102:9102"
+    depends_on:
+      - registry
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - registry
+      - load-balancer
+      - mock-service
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus

@@ -17,6 +17,10 @@ func TestLoadLoadBalancer(t *testing.T) {
 		t.Errorf("HTTPAddress = %q, want %q", cfg.HTTPAddress, defaultLBHTTPAddress)
 	}
 
+	if cfg.ObservabilityAddress != defaultLBObservabilityAddress {
+		t.Errorf("ObservabilityAddress = %q, want %q", cfg.ObservabilityAddress, defaultLBObservabilityAddress)
+	}
+
 	if len(cfg.RegistryAddresses) != 2 {
 		t.Errorf("len(RegistryAddresses) = %d, want %d", len(cfg.RegistryAddresses), 2)
 	}

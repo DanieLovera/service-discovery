@@ -12,19 +12,21 @@ import (
 )
 
 const (
-	defaultMockHTTPAddress   = "0.0.0.0:9000"
-	defaultHeartbeatInterval = 5 * time.Second
-	defaultWeight            = 1
+	defaultMockHTTPAddress          = "0.0.0.0:9000"
+	defaultMockObservabilityAddress = "0.0.0.0:9102"
+	defaultHeartbeatInterval        = 5 * time.Second
+	defaultWeight                   = 1
 )
 
 type MockService struct {
-	ServiceName       string
-	InstanceID        string
-	HTTPAddress       string
-	RegistryAddresses []string
-	Weight            int
-	HeartbeatInterval time.Duration
-	Log               logging.Config
+	ServiceName          string
+	InstanceID           string
+	HTTPAddress          string
+	ObservabilityAddress string
+	RegistryAddresses    []string
+	Weight               int
+	HeartbeatInterval    time.Duration
+	Log                  logging.Config
 }
 
 func LoadMockService() (MockService, error) {
@@ -38,12 +40,13 @@ func LoadMockService() (MockService, error) {
 	}
 
 	cfg := MockService{
-		ServiceName:       strings.TrimSpace(os.Getenv("MS_NAME")),
-		InstanceID:        strings.TrimSpace(os.Getenv("MS_INSTANCE_ID")),
-		HTTPAddress:       stringFromEnvOrDefault("MS_HTTP_ADDRESS", defaultMockHTTPAddress),
-		RegistryAddresses: splitCSV(os.Getenv("MS_REGISTRY_ADDRESSES")),
-		Weight:            weight,
-		HeartbeatInterval: interval,
+		ServiceName:          strings.TrimSpace(os.Getenv("MS_NAME")),
+		InstanceID:           strings.TrimSpace(os.Getenv("MS_INSTANCE_ID")),
+		HTTPAddress:          stringFromEnvOrDefault("MS_HTTP_ADDRESS", defaultMockHTTPAddress),
+		ObservabilityAddress: stringFromEnvOrDefault("MS_OBSERVABILITY_ADDRESS", defaultMockObservabilityAddress),
+		RegistryAddresses:    splitCSV(os.Getenv("MS_REGISTRY_ADDRESSES")),
+		Weight:               weight,
+		HeartbeatInterval:    interval,
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("MS_LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("MS_LOG_FORMAT", "json"),
