@@ -1,0 +1,13 @@
+.git
+.github
+bin
+dist
+coverage
+*.out
+*.test
+*.coverprofile
+.env
+.env.*
+Dockerfile*
+README.md
+docs
