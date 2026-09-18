@@ -1,5 +1,6 @@
 services:
   registry:
+    image: daanilo/registry:dev
     build:
       context: .
       args:
@@ -13,6 +14,7 @@ services:
       - "9100:9100"
 
   load-balancer:
+    image: daanilo/load-balancer:dev
     build:
       context: .
       args:
@@ -26,6 +28,7 @@ services:
       - registry
 
   mock-service:
+    image: daanilo/mock-service:dev
     build:
       context: .
       args:
@@ -59,3 +62,11 @@ services:
       - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
+
+  dozzle:
+    image: amir20/dozzle:latest
+    profiles: ["debug"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:8081:8080"
