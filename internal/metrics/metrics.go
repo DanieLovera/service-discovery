@@ -15,18 +15,7 @@ type Metrics struct {
 func New(service, instance string) *Metrics {
 	registry := prometheus.NewRegistry()
 
-	serviceInfo := prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "tpiii_service_info",
-			Help: "Static information about a running TPIII service instance.",
-		},
-		[]string{"service", "instance"},
-	)
-
-	serviceInfo.WithLabelValues(service, instance).Set(1)
-
 	registry.MustRegister(
-		serviceInfo,
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 		collectors.NewGoCollector(),
 	)

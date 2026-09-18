@@ -24,7 +24,7 @@ func main() {
 }
 
 func run() error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	cfg, err := config.LoadLoadBalancer()
@@ -53,7 +53,7 @@ func run() error {
 		"registry_addresses", cfg.RegistryAddresses,
 	)
 
-	<-ctx.Done()
+	<-signalCtx.Done()
 
 	logger.Info("Load Balancer process stopping")
 
@@ -65,5 +65,6 @@ func run() error {
 		return err
 	}
 
+	logger.Info("Load Balancer process stopped")
 	return nil
 }

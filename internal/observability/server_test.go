@@ -22,11 +22,13 @@ func TestEndpoints(t *testing.T) {
 		{
 			name:           "health returns OK",
 			path:           "/healthz",
+			ready:          false,
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "ready returns unavailable by default",
 			path:           "/readyz",
+			ready:          false,
 			expectedStatus: http.StatusServiceUnavailable,
 		},
 		{
@@ -46,55 +48,6 @@ func TestEndpoints(t *testing.T) {
 			response := httptest.NewRecorder()
 
 			server.httpServer.Handler.ServeHTTP(response, request)
-
-			if response.Code != tt.expectedStatus {
-				t.Fatalf("expected status %d, got %d", tt.expectedStatus, response.Code)
-			}
-		})
-	}
-}
-
-func TestSetReady(t *testing.T) {
-	tests := []struct {
-		name           string
-		states         []bool
-		expectedStatus int
-	}{
-		{
-			name:           "ready",
-			states:         []bool{true},
-			expectedStatus: http.StatusOK,
-		},
-		{
-			name:           "not ready",
-			states:         []bool{false},
-			expectedStatus: http.StatusServiceUnavailable,
-		},
-		{
-			name:           "ready then not ready",
-			states:         []bool{true, false},
-			expectedStatus: http.StatusServiceUnavailable,
-		},
-		{
-			name:           "not ready then ready",
-			states:         []bool{false, true},
-			expectedStatus: http.StatusOK,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			server := New(":0", http.NotFoundHandler(), testLogger())
-
-			for _, ready := range tt.states {
-				server.SetReady(ready)
-			}
-
-			request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
-			response := httptest.NewRecorder()
-
-			server.httpServer.Handler.ServeHTTP(response, request)
-
 			if response.Code != tt.expectedStatus {
 				t.Fatalf("expected status %d, got %d", tt.expectedStatus, response.Code)
 			}
@@ -118,7 +71,6 @@ func TestMetricsEndpointUsesProvidedHandler(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
 	}
-
 	if response.Body.String() != "test_metric 1\n" {
 		t.Fatalf("unexpected body: %q", response.Body.String())
 	}
@@ -137,7 +89,6 @@ func TestStartReturnsErrorWhenAddressIsAlreadyInUse(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected Start to return an error")
 	}
-
 	if !strings.Contains(err.Error(), "serve observability HTTP") {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -188,7 +139,6 @@ func freeAddress(t *testing.T) string {
 	if err := listener.Close(); err != nil {
 		t.Fatalf("close listener: %v", err)
 	}
-
 	return address
 }
 

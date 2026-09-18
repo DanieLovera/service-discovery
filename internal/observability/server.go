@@ -29,7 +29,6 @@ func New(address string, metricsHandler http.Handler, logger *slog.Logger) *Serv
 		Addr:    address,
 		Handler: mux,
 	}
-
 	return s
 }
 
@@ -43,17 +42,17 @@ func (s *Server) Start() error {
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("serve observability HTTP: %w", err)
 	}
-
 	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	s.logger.Info("Observability server stopping")
+
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown observability HTTP: %w", err)
 	}
 
 	s.logger.Info("Observability server stopped")
-
 	return nil
 }
 
@@ -67,7 +66,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) handleReady(w http.ResponseWriter, _ *http.Request) {
 	if !s.ready.Load() {
-		http.Error(w, "not ready", http.StatusServiceUnavailable)
+		http.Error(w, "Not ready", http.StatusServiceUnavailable)
 		return
 	}
 

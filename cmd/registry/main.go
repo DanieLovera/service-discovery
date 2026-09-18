@@ -24,7 +24,7 @@ func main() {
 }
 
 func run() error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	cfg, err := config.LoadRegistry()
@@ -54,7 +54,7 @@ func run() error {
 		"grpc_address", cfg.GRPCAddress,
 	)
 
-	<-ctx.Done()
+	<-signalCtx.Done()
 
 	logger.Info("Registry process stopping")
 
@@ -66,5 +66,6 @@ func run() error {
 		return err
 	}
 
+	logger.Info("Registry process stopped")
 	return nil
 }
