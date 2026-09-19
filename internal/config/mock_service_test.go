@@ -7,14 +7,14 @@ import (
 )
 
 func TestLoadMockService(t *testing.T) {
-	t.Setenv("MS_NAME", "payments")
-	t.Setenv("MS_INSTANCE_ID", "payments-1")
-	t.Setenv("MS_HTTP_ADDRESS", "0.0.0.0:9100")
-	t.Setenv("MS_REGISTRY_ADDRESSES", "registry-1:7000, registry-2:7000")
-	t.Setenv("MS_WEIGHT", "3")
-	t.Setenv("MS_HEARTBEAT_INTERVAL", "2s")
-	t.Setenv("MS_LOG_LEVEL", "debug")
-	t.Setenv("MS_LOG_FORMAT", "text")
+	t.Setenv("NAME", "payments")
+	t.Setenv("INSTANCE_ID", "payments-1")
+	t.Setenv("HTTP_ADDRESS", "0.0.0.0:9100")
+	t.Setenv("REGISTRY_ADDRESSES", "registry-1:7000, registry-2:7000")
+	t.Setenv("WEIGHT", "3")
+	t.Setenv("HEARTBEAT_INTERVAL", "2s")
+	t.Setenv("LOG_LEVEL", "debug")
+	t.Setenv("LOG_FORMAT", "text")
 
 	cfg, err := LoadMockService()
 	if err != nil {
@@ -65,9 +65,9 @@ func TestLoadMockService(t *testing.T) {
 }
 
 func TestLoadMockServiceUsesDefaults(t *testing.T) {
-	t.Setenv("MS_NAME", "payments")
-	t.Setenv("MS_INSTANCE_ID", "payments-1")
-	t.Setenv("MS_REGISTRY_ADDRESSES", "registry-1:7000")
+	t.Setenv("NAME", "payments")
+	t.Setenv("INSTANCE_ID", "payments-1")
+	t.Setenv("REGISTRY_ADDRESSES", "registry-1:7000")
 
 	cfg, err := LoadMockService()
 	if err != nil {
@@ -107,26 +107,26 @@ func TestLoadMockServiceRequiresFields(t *testing.T) {
 	}{
 		{
 			name:      "missing service name",
-			envKey:    "MS_NAME",
-			wantError: "MS_NAME is required",
+			envKey:    "NAME",
+			wantError: "NAME is required",
 		},
 		{
 			name:      "missing instance id",
-			envKey:    "MS_INSTANCE_ID",
-			wantError: "MS_INSTANCE_ID is required",
+			envKey:    "INSTANCE_ID",
+			wantError: "INSTANCE_ID is required",
 		},
 		{
 			name:      "missing registry addresses",
-			envKey:    "MS_REGISTRY_ADDRESSES",
-			wantError: "MS_REGISTRY_ADDRESSES is required",
+			envKey:    "REGISTRY_ADDRESSES",
+			wantError: "REGISTRY_ADDRESSES is required",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv("MS_NAME", "payments")
-			t.Setenv("MS_INSTANCE_ID", "payments-1")
-			t.Setenv("MS_REGISTRY_ADDRESSES", "registry-1:7000")
+			t.Setenv("NAME", "payments")
+			t.Setenv("INSTANCE_ID", "payments-1")
+			t.Setenv("REGISTRY_ADDRESSES", "registry-1:7000")
 			t.Setenv(tt.envKey, "")
 
 			_, err := LoadMockService()
@@ -150,35 +150,35 @@ func TestLoadMockServiceRejectsNonPositiveValues(t *testing.T) {
 	}{
 		{
 			name:      "zero weight",
-			envKey:    "MS_WEIGHT",
+			envKey:    "WEIGHT",
 			envValue:  "0",
-			wantError: "MS_WEIGHT must be greater than zero",
+			wantError: "WEIGHT must be greater than zero",
 		},
 		{
 			name:      "negative weight",
-			envKey:    "MS_WEIGHT",
+			envKey:    "WEIGHT",
 			envValue:  "-1",
-			wantError: "MS_WEIGHT must be greater than zero",
+			wantError: "WEIGHT must be greater than zero",
 		},
 		{
 			name:      "zero heartbeat interval",
-			envKey:    "MS_HEARTBEAT_INTERVAL",
+			envKey:    "HEARTBEAT_INTERVAL",
 			envValue:  "0s",
-			wantError: "MS_HEARTBEAT_INTERVAL must be greater than zero",
+			wantError: "HEARTBEAT_INTERVAL must be greater than zero",
 		},
 		{
 			name:      "negative heartbeat interval",
-			envKey:    "MS_HEARTBEAT_INTERVAL",
+			envKey:    "HEARTBEAT_INTERVAL",
 			envValue:  "-1s",
-			wantError: "MS_HEARTBEAT_INTERVAL must be greater than zero",
+			wantError: "HEARTBEAT_INTERVAL must be greater than zero",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv("MS_NAME", "payments")
-			t.Setenv("MS_INSTANCE_ID", "payments-1")
-			t.Setenv("MS_REGISTRY_ADDRESSES", "registry-1:7000")
+			t.Setenv("NAME", "payments")
+			t.Setenv("INSTANCE_ID", "payments-1")
+			t.Setenv("REGISTRY_ADDRESSES", "registry-1:7000")
 			t.Setenv(tt.envKey, tt.envValue)
 
 			_, err := LoadMockService()
@@ -202,23 +202,23 @@ func TestLoadMockServiceRejectsInvalidValues(t *testing.T) {
 	}{
 		{
 			name:      "invalid weight",
-			envKey:    "MS_WEIGHT",
+			envKey:    "WEIGHT",
 			envValue:  "invalid",
-			wantError: "MS_WEIGHT must be an integer",
+			wantError: "WEIGHT must be an integer",
 		},
 		{
 			name:      "invalid heartbeat interval",
-			envKey:    "MS_HEARTBEAT_INTERVAL",
+			envKey:    "HEARTBEAT_INTERVAL",
 			envValue:  "invalid",
-			wantError: "MS_HEARTBEAT_INTERVAL must be a Go duration",
+			wantError: "HEARTBEAT_INTERVAL must be a Go duration",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv("MS_NAME", "payments")
-			t.Setenv("MS_INSTANCE_ID", "payments-1")
-			t.Setenv("MS_REGISTRY_ADDRESSES", "registry-1:7000")
+			t.Setenv("NAME", "payments")
+			t.Setenv("INSTANCE_ID", "payments-1")
+			t.Setenv("REGISTRY_ADDRESSES", "registry-1:7000")
 			t.Setenv(tt.envKey, tt.envValue)
 
 			_, err := LoadMockService()
