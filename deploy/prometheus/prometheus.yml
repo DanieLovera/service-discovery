@@ -5,14 +5,14 @@ scrape_configs:
   - job_name: registry
     static_configs:
       - targets:
-          - registry:9100
+          - registry:10000
 
   - job_name: load-balancer
     static_configs:
       - targets:
-          - load-balancer:9101
+          - load-balancer:10010
 
   - job_name: mock-service
     static_configs:
       - targets:
-          - mock-service:9102
+          - mock-service:10020

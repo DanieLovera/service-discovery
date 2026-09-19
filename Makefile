@@ -19,7 +19,7 @@ help:
 		'make docker-up        	Build and start the Docker Compose environment' \
 		'make docker-up-debug	Build and start the Docker Compose environment with debug tools' \
 		'make docker-down      	Stop and remove the Docker Compose environment' \
-		'make docker-images     Show Docker Compose service images' \		
+		'make docker-images    	Show Docker Compose service images' \
 		'make docker-ps        	Show Docker Compose service status' \
 		'make docker-clean     	Remove Compose containers, local images and volumes'
 
