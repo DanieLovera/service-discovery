@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Quality checks
+        run: make quality
+
+      - name: Build entrypoints
+        run: |
+          CGO_ENABLED=0 go build -trimpath ./cmd/registry
+          CGO_ENABLED=0 go build -trimpath ./cmd/load-balancer
+          CGO_ENABLED=0 go build -trimpath ./cmd/mock-service
