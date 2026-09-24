@@ -5,17 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"sync/atomic"
 )
 
 type Server struct {
 	httpServer *http.Server
+	listener   net.Listener
 	logger     *slog.Logger
 	ready      atomic.Bool
 }
 
-func New(address string, metricsHandler http.Handler, logger *slog.Logger) *Server {
+func NewServer(address string, metricsHandler http.Handler, logger *slog.Logger) *Server {
 	s := &Server{
 		logger: logger,
 	}
@@ -32,27 +34,32 @@ func New(address string, metricsHandler http.Handler, logger *slog.Logger) *Serv
 	return s
 }
 
-func (s *Server) Start() error {
-	s.logger.Info(
-		"Observability server started",
-		"address", s.httpServer.Addr,
-	)
-
-	err := s.httpServer.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return fmt.Errorf("serve observability HTTP: %w", err)
+func (s *Server) Listen() error {
+	listener, err := net.Listen("tcp", s.httpServer.Addr)
+	if err != nil {
+		return fmt.Errorf("listen on %s: %w", s.httpServer.Addr, err)
 	}
+	s.listener = listener
+	return nil
+}
+
+func (s *Server) Serve() error {
+	s.logger.Info("Observability server started", "address", s.httpServer.Addr)
+
+	if err := s.httpServer.Serve(s.listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("serve: %w", err)
+	}
+
 	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.logger.Info("Observability server stopping")
+	defer s.logger.Info("Observability server stopped")
 
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown observability HTTP: %w", err)
 	}
 
-	s.logger.Info("Observability server stopped")
 	return nil
 }
 
@@ -69,6 +76,5 @@ func (s *Server) handleReady(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "Not ready", http.StatusServiceUnavailable)
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 }

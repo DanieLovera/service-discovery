@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,8 +11,7 @@ import (
 
 	"tpiii.local/daniel-tpiii/internal/config"
 	"tpiii.local/daniel-tpiii/internal/logging"
-	"tpiii.local/daniel-tpiii/internal/metrics"
-	"tpiii.local/daniel-tpiii/internal/observability"
+	"tpiii.local/daniel-tpiii/internal/registry/app"
 )
 
 const shutdownTimeout = 5 * time.Second
@@ -23,10 +23,7 @@ func main() {
 	}
 }
 
-func run() error {
-	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
+func run() (err error) {
 	cfg, err := config.LoadRegistry()
 	if err != nil {
 		return fmt.Errorf("load registry configuration: %w", err)
@@ -37,35 +34,35 @@ func run() error {
 		return fmt.Errorf("initialize logger: %w", err)
 	}
 
-	processMetrics := metrics.New("registry", cfg.NodeID)
+	ctx, stopCtx := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopCtx()
 
-	observabilityServer := observability.New(cfg.ObservabilityAddress, processMetrics.Handler(), logger)
-	go func() {
-		if err := observabilityServer.Start(); err != nil {
-			logger.Error("Observability server stopped", "error", err)
-		}
-	}()
-	observabilityServer.SetReady(true)
-
-	logger.Info(
-		"Registry process started",
-		"node_id", cfg.NodeID,
-		"backend", cfg.Backend,
-		"grpc_address", cfg.GRPCAddress,
-	)
-
-	<-signalCtx.Done()
-
-	logger.Info("Registry process stopping")
-
-	observabilityServer.SetReady(false)
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	if err := observabilityServer.Shutdown(shutdownCtx); err != nil {
-		return err
+	application, err := app.New(app.Params{
+		NodeID:               cfg.NodeID,
+		Backend:              cfg.Backend,
+		GRPCAddress:          cfg.GRPCAddress,
+		ObservabilityAddress: cfg.ObservabilityAddress,
+		ClusterMembers:       cfg.ClusterMembers,
+		Logger:               logger,
+	})
+	if err != nil {
+		return fmt.Errorf("initialize registry application: %w", err)
 	}
 
-	logger.Info("Registry process stopped")
+	defer func() {
+		err = errors.Join(err, stop(application))
+	}()
+
+	if err := application.Run(ctx); err != nil {
+		return fmt.Errorf("run registry application: %w", err)
+	}
+
 	return nil
+}
+
+func stop(application *app.App) error {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	return application.Stop(ctx)
 }
