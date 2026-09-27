@@ -12,10 +12,14 @@ type Handler struct {
 	registrypb.UnimplementedRegistryServiceServer
 
 	registryManager *registry.RegistryManager
+	healthManager   *registry.HealthManager
 }
 
-func NewHandler(registryManager *registry.RegistryManager) *Handler {
-	return &Handler{registryManager: registryManager}
+func NewHandler(registryManager *registry.RegistryManager, healthManager *registry.HealthManager) *Handler {
+	return &Handler{
+		registryManager: registryManager,
+		healthManager:   healthManager,
+	}
 }
 
 func (h *Handler) Register(ctx context.Context, req *registrypb.RegisterRequest) (*registrypb.RegisterResponse, error) {
@@ -62,6 +66,18 @@ func (h *Handler) Deregister(ctx context.Context, req *registrypb.DeregisterRequ
 	}
 
 	return &registrypb.DeregisterResponse{}, nil
+}
+
+func (h *Handler) Heartbeat(ctx context.Context, req *registrypb.HeartbeatRequest) (*registrypb.HeartbeatResponse, error) {
+	err := h.healthManager.Heartbeat(ctx, registry.ServiceInstanceID{
+		ServiceName: req.GetServiceName(),
+		InstanceID:  req.GetInstanceId(),
+	})
+	if err != nil {
+		return nil, grpcError(err)
+	}
+
+	return &registrypb.HeartbeatResponse{}, nil
 }
 
 func (h *Handler) Lookup(ctx context.Context, req *registrypb.LookupRequest) (*registrypb.LookupResponse, error) {

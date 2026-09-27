@@ -12,7 +12,6 @@ import (
 
 type Server struct {
 	httpServer *http.Server
-	listener   net.Listener
 	logger     *slog.Logger
 	ready      atomic.Bool
 }
@@ -31,26 +30,28 @@ func NewServer(address string, metricsHandler http.Handler, logger *slog.Logger)
 		Addr:    address,
 		Handler: mux,
 	}
+
 	return s
 }
 
-func (s *Server) Listen() error {
+func (s *Server) Serve() (<-chan error, error) {
 	listener, err := net.Listen("tcp", s.httpServer.Addr)
 	if err != nil {
-		return fmt.Errorf("listen on %s: %w", s.httpServer.Addr, err)
-	}
-	s.listener = listener
-	return nil
-}
-
-func (s *Server) Serve() error {
-	s.logger.Info("Observability server started", "address", s.httpServer.Addr)
-
-	if err := s.httpServer.Serve(s.listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return fmt.Errorf("serve: %w", err)
+		return nil, fmt.Errorf("listen on %s: %w", s.httpServer.Addr, err)
 	}
 
-	return nil
+	errs := make(chan error, 1)
+
+	go func() {
+		s.logger.Info("Observability server started", "address", s.httpServer.Addr)
+
+		if err := s.httpServer.Serve(listener); err != nil &&
+			!errors.Is(err, http.ErrServerClosed) {
+			errs <- fmt.Errorf("serve: %w", err)
+		}
+	}()
+
+	return errs, nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
@@ -76,5 +77,6 @@ func (s *Server) handleReady(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "Not ready", http.StatusServiceUnavailable)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }

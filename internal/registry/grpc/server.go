@@ -15,7 +15,6 @@ import (
 type Server struct {
 	grpcServer *googlegrpc.Server
 	address    string
-	listener   net.Listener
 	logger     *slog.Logger
 }
 
@@ -30,22 +29,23 @@ func NewServer(address string, handler registrypb.RegistryServiceServer, logger 
 	}
 }
 
-func (s *Server) Listen() error {
+func (s *Server) Serve() (<-chan error, error) {
 	listener, err := net.Listen("tcp", s.address)
 	if err != nil {
-		return fmt.Errorf("listen on %s: %w", s.address, err)
+		return nil, fmt.Errorf("listen on %s: %w", s.address, err)
 	}
-	s.listener = listener
-	return nil
-}
 
-func (s *Server) Serve() error {
-	s.logger.Info("Registry gRPC server started", "address", s.address)
+	errs := make(chan error, 1)
 
-	if err := s.grpcServer.Serve(s.listener); err != nil && !errors.Is(err, googlegrpc.ErrServerStopped) {
-		return fmt.Errorf("serve: %w", err)
-	}
-	return nil
+	go func() {
+		s.logger.Info("Registry gRPC server started", "address", s.address)
+
+		if err := s.grpcServer.Serve(listener); err != nil && !errors.Is(err, googlegrpc.ErrServerStopped) {
+			errs <- fmt.Errorf("serve: %w", err)
+		}
+	}()
+
+	return errs, nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

@@ -4,10 +4,11 @@ SHELL := /bin/sh
 GO ?= go
 
 .PHONY: help fmt fmt-check vet staticcheck test test-race test-integration quality \
-		docker-up docker-up-debug docker-down docker-ps docker-images docker-clean
+		docker-up docker-up-debug docker-down docker-ps docker-images docker-clean proto
 
 help:
 	@printf '%s\n' \
+		'make proto           	Generate Go code from Protocol Buffer definitions' \
 		'make fmt              	Format Go source files' \
 		'make fmt-check        	Fail if Go source files are not formatted' \
 		'make vet              	Run go vet' \
@@ -22,6 +23,14 @@ help:
 		'make docker-images    	Show Docker Compose service images' \
 		'make docker-ps        	Show Docker Compose service status' \
 		'make docker-clean     	Remove Compose containers, local images and volumes'
+
+proto:
+	@protoc \
+		--go_out=. \
+		--go_opt=module=tpiii.local/daniel-tpiii \
+		--go-grpc_out=. \
+		--go-grpc_opt=module=tpiii.local/daniel-tpiii \
+		proto/registry.proto
 
 fmt:
 	@$(GO) fmt ./...

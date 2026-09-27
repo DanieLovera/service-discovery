@@ -2,13 +2,12 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v3.21.12
-// source: api/proto/registry.proto
+// source: proto/registry.proto
 
 package registrypb
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,6 +22,7 @@ const (
 	RegistryService_Register_FullMethodName   = "/registry.RegistryService/Register"
 	RegistryService_Update_FullMethodName     = "/registry.RegistryService/Update"
 	RegistryService_Deregister_FullMethodName = "/registry.RegistryService/Deregister"
+	RegistryService_Heartbeat_FullMethodName  = "/registry.RegistryService/Heartbeat"
 	RegistryService_Lookup_FullMethodName     = "/registry.RegistryService/Lookup"
 )
 
@@ -33,6 +33,7 @@ type RegistryServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error)
+	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
 	Lookup(ctx context.Context, in *LookupRequest, opts ...grpc.CallOption) (*LookupResponse, error)
 }
 
@@ -74,6 +75,16 @@ func (c *registryServiceClient) Deregister(ctx context.Context, in *DeregisterRe
 	return out, nil
 }
 
+func (c *registryServiceClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HeartbeatResponse)
+	err := c.cc.Invoke(ctx, RegistryService_Heartbeat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *registryServiceClient) Lookup(ctx context.Context, in *LookupRequest, opts ...grpc.CallOption) (*LookupResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LookupResponse)
@@ -91,6 +102,7 @@ type RegistryServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error)
+	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
 	Lookup(context.Context, *LookupRequest) (*LookupResponse, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
@@ -110,6 +122,9 @@ func (UnimplementedRegistryServiceServer) Update(context.Context, *UpdateRequest
 }
 func (UnimplementedRegistryServiceServer) Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Deregister not implemented")
+}
+func (UnimplementedRegistryServiceServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Heartbeat not implemented")
 }
 func (UnimplementedRegistryServiceServer) Lookup(context.Context, *LookupRequest) (*LookupResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Lookup not implemented")
@@ -189,6 +204,24 @@ func _RegistryService_Deregister_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HeartbeatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).Heartbeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_Heartbeat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).Heartbeat(ctx, req.(*HeartbeatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RegistryService_Lookup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LookupRequest)
 	if err := dec(in); err != nil {
@@ -227,10 +260,14 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RegistryService_Deregister_Handler,
 		},
 		{
+			MethodName: "Heartbeat",
+			Handler:    _RegistryService_Heartbeat_Handler,
+		},
+		{
 			MethodName: "Lookup",
 			Handler:    _RegistryService_Lookup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/proto/registry.proto",
+	Metadata: "proto/registry.proto",
 }

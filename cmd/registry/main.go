@@ -17,13 +17,13 @@ import (
 const shutdownTimeout = 5 * time.Second
 
 func main() {
-	if err := run(); err != nil {
+	if err := start(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run() (err error) {
+func start() (err error) {
 	cfg, err := config.LoadRegistry()
 	if err != nil {
 		return fmt.Errorf("load registry configuration: %w", err)
@@ -48,15 +48,13 @@ func run() (err error) {
 	if err != nil {
 		return fmt.Errorf("initialize registry application: %w", err)
 	}
-
 	defer func() {
 		err = errors.Join(err, stop(application))
 	}()
 
-	if err := application.Run(ctx); err != nil {
-		return fmt.Errorf("run registry application: %w", err)
+	if err := application.Start(ctx); err != nil {
+		return fmt.Errorf("start registry application: %w", err)
 	}
-
 	return nil
 }
 

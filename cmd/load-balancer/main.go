@@ -40,16 +40,10 @@ func run() error {
 	processMetrics := metrics.New("load-balancer", "load-balancer")
 	observabilityServer := observability.NewServer(cfg.ObservabilityAddress, processMetrics.Handler(), logger)
 
-	if err := observabilityServer.Listen(); err != nil {
-		return fmt.Errorf("listen observability server: %w", err)
+	serveErrs, err := observabilityServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve observability server: %w", err)
 	}
-
-	serveErrs := make(chan error, 1)
-	go func() {
-		if err := observabilityServer.Serve(); err != nil {
-			serveErrs <- fmt.Errorf("serve observability server: %w", err)
-		}
-	}()
 
 	observabilityServer.SetReady(true)
 
@@ -62,12 +56,13 @@ func run() error {
 	select {
 	case <-signalCtx.Done():
 	case err := <-serveErrs:
-		return err
+		return fmt.Errorf("observability server failed: %w", err)
 	}
 
 	logger.Info("Load Balancer process stopping")
 
 	observabilityServer.SetReady(false)
+
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
