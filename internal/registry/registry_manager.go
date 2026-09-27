@@ -27,20 +27,20 @@ func NewRegistryManager(backend Backend) *RegistryManager {
 	return &RegistryManager{backend: backend}
 }
 
-func (m *RegistryManager) Register(ctx context.Context, params RegisterParams) error {
-	return m.backend.Register(ctx, params)
+func (r *RegistryManager) Register(ctx context.Context, params RegisterParams) error {
+	return r.backend.Register(ctx, params)
 }
 
-func (m *RegistryManager) Update(ctx context.Context, params UpdateParams) error {
-	return m.backend.Update(ctx, params)
+func (r *RegistryManager) Update(ctx context.Context, params UpdateParams) error {
+	return r.backend.Update(ctx, params)
 }
 
-func (m *RegistryManager) Deregister(ctx context.Context, id ServiceInstanceID) error {
-	return m.backend.Deregister(ctx, id)
+func (r *RegistryManager) Deregister(ctx context.Context, id ServiceInstanceID) error {
+	return r.backend.Deregister(ctx, id)
 }
 
-func (m *RegistryManager) Lookup(ctx context.Context, id ServiceInstanceID) ([]ServiceInstance, error) {
-	instances, err := m.backend.Lookup(ctx, id)
+func (r *RegistryManager) Lookup(ctx context.Context, id ServiceInstanceID) ([]ServiceInstance, error) {
+	instances, err := r.backend.Lookup(ctx, id)
 	if err != nil {
 		return nil, err
 	}

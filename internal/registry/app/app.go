@@ -23,6 +23,7 @@ type Params struct {
 }
 
 type App struct {
+	healthManager       *registry.HealthManager
 	grpcServer          *grpc.Server
 	observabilityServer *observability.Server
 	logger              *slog.Logger
@@ -35,7 +36,8 @@ func New(params Params) (*App, error) {
 	}
 
 	registryManager := registry.NewRegistryManager(backend)
-	grpcHandler := grpc.NewHandler(registryManager)
+	healthManager := registry.NewHealthManager(backend, params.Logger)
+	grpcHandler := grpc.NewHandler(registryManager, healthManager)
 	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger)
 
 	processMetrics := metrics.New("registry", params.NodeID)
@@ -48,32 +50,27 @@ func New(params Params) (*App, error) {
 
 	return &App{
 		logger:              params.Logger,
+		healthManager:       healthManager,
 		grpcServer:          grpcServer,
 		observabilityServer: observabilityServer,
 	}, nil
 }
 
-func (a *App) Run(ctx context.Context) error {
-	if err := a.observabilityServer.Listen(); err != nil {
-		return fmt.Errorf("listen observability server: %w", err)
+func (a *App) Start(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	observabilityErrs, err := a.observabilityServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve observability server: %w", err)
 	}
-	if err := a.grpcServer.Listen(); err != nil {
-		return fmt.Errorf("listen registry gRPC server: %w", err)
+
+	grpcErrs, err := a.grpcServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve registry gRPC server: %w", err)
 	}
 
-	grpcErrs := make(chan error, 1)
-
-	go func() {
-		if err := a.observabilityServer.Serve(); err != nil {
-			a.logger.Error("Observability server failed", "error", err)
-		}
-	}()
-
-	go func() {
-		if err := a.grpcServer.Serve(); err != nil {
-			grpcErrs <- fmt.Errorf("serve registry gRPC server: %w", err)
-		}
-	}()
+	a.healthManager.Start(ctx)
 
 	a.observabilityServer.SetReady(true)
 	a.logger.Info("Registry started")
@@ -81,8 +78,11 @@ func (a *App) Run(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		return nil
+	case err := <-observabilityErrs:
+		return fmt.Errorf("observability server failed: %w", err)
+
 	case err := <-grpcErrs:
-		return err
+		return fmt.Errorf("registry gRPC server failed: %w", err)
 	}
 }
 
@@ -96,13 +96,13 @@ func (a *App) Stop(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Go(func() {
 		if err := a.observabilityServer.Shutdown(ctx); err != nil {
-			errs[1] = fmt.Errorf("shutdown observability server: %w", err)
+			errs[0] = fmt.Errorf("shutdown observability server: %w", err)
 		}
 	})
 
 	wg.Go(func() {
 		if err := a.grpcServer.Shutdown(ctx); err != nil {
-			errs[0] = fmt.Errorf("shutdown registry gRPC server: %w", err)
+			errs[1] = fmt.Errorf("shutdown registry gRPC server: %w", err)
 		}
 	})
 
