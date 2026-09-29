@@ -4,12 +4,13 @@ package registry;
 
 option go_package = "tpiii.local/daniel-tpiii/gen/registry;registrypb";
 
-service RegistryService {
+service Registry {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Deregister(DeregisterRequest) returns (DeregisterResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
   rpc Lookup(LookupRequest) returns (LookupResponse);
+  rpc Watch(WatchRequest) returns (stream WatchResponse);
 }
 
 message RegisterRequest {
@@ -69,4 +70,33 @@ enum ServiceInstanceStatus {
   SERVICE_INSTANCE_STATUS_HEALTHY = 1;
   SERVICE_INSTANCE_STATUS_EXPIRED = 2;
   SERVICE_INSTANCE_STATUS_DELETED = 3;
+}
+
+message WatchRequest {
+  string service_name = 1;
+}
+
+message WatchResponse {
+  oneof payload {
+    WatchSnapshot snapshot = 1;
+    WatchEvent event = 2;
+  }
+}
+
+message WatchSnapshot {
+  repeated ServiceInstance instances = 1;
+}
+
+message WatchEvent {
+  StateChangeType type = 1;
+  ServiceInstance instance = 2;
+}
+
+enum StateChangeType {
+  STATE_CHANGE_TYPE_UNSPECIFIED = 0;
+  STATE_CHANGE_TYPE_REGISTERED = 1;
+  STATE_CHANGE_TYPE_UPDATED = 2;
+  STATE_CHANGE_TYPE_HEALTHY = 3;
+  STATE_CHANGE_TYPE_EXPIRED = 4;
+  STATE_CHANGE_TYPE_DELETED = 5;
 }

@@ -18,9 +18,9 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func NewServer(address string, handler registrypb.RegistryServiceServer, logger *slog.Logger) *Server {
+func NewServer(address string, handler registrypb.RegistryServer, logger *slog.Logger) *Server {
 	grpcServer := googlegrpc.NewServer()
-	registrypb.RegisterRegistryServiceServer(grpcServer, handler)
+	registrypb.RegisterRegistryServer(grpcServer, handler)
 
 	return &Server{
 		grpcServer: grpcServer,

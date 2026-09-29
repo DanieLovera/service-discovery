@@ -19,255 +19,297 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RegistryService_Register_FullMethodName   = "/registry.RegistryService/Register"
-	RegistryService_Update_FullMethodName     = "/registry.RegistryService/Update"
-	RegistryService_Deregister_FullMethodName = "/registry.RegistryService/Deregister"
-	RegistryService_Heartbeat_FullMethodName  = "/registry.RegistryService/Heartbeat"
-	RegistryService_Lookup_FullMethodName     = "/registry.RegistryService/Lookup"
+	Registry_Register_FullMethodName   = "/registry.Registry/Register"
+	Registry_Update_FullMethodName     = "/registry.Registry/Update"
+	Registry_Deregister_FullMethodName = "/registry.Registry/Deregister"
+	Registry_Heartbeat_FullMethodName  = "/registry.Registry/Heartbeat"
+	Registry_Lookup_FullMethodName     = "/registry.Registry/Lookup"
+	Registry_Watch_FullMethodName      = "/registry.Registry/Watch"
 )
 
-// RegistryServiceClient is the client API for RegistryService service.
+// RegistryClient is the client API for Registry service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type RegistryServiceClient interface {
+type RegistryClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error)
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
 	Lookup(ctx context.Context, in *LookupRequest, opts ...grpc.CallOption) (*LookupResponse, error)
+	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchResponse], error)
 }
 
-type registryServiceClient struct {
+type registryClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewRegistryServiceClient(cc grpc.ClientConnInterface) RegistryServiceClient {
-	return &registryServiceClient{cc}
+func NewRegistryClient(cc grpc.ClientConnInterface) RegistryClient {
+	return &registryClient{cc}
 }
 
-func (c *registryServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+func (c *registryClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Register_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Registry_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *registryServiceClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+func (c *registryClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Update_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Registry_Update_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *registryServiceClient) Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error) {
+func (c *registryClient) Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeregisterResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Deregister_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Registry_Deregister_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *registryServiceClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error) {
+func (c *registryClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HeartbeatResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Heartbeat_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Registry_Heartbeat_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *registryServiceClient) Lookup(ctx context.Context, in *LookupRequest, opts ...grpc.CallOption) (*LookupResponse, error) {
+func (c *registryClient) Lookup(ctx context.Context, in *LookupRequest, opts ...grpc.CallOption) (*LookupResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LookupResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Lookup_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Registry_Lookup_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// RegistryServiceServer is the server API for RegistryService service.
-// All implementations must embed UnimplementedRegistryServiceServer
+func (c *registryClient) Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Registry_ServiceDesc.Streams[0], Registry_Watch_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WatchRequest, WatchResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Registry_WatchClient = grpc.ServerStreamingClient[WatchResponse]
+
+// RegistryServer is the server API for Registry service.
+// All implementations must embed UnimplementedRegistryServer
 // for forward compatibility.
-type RegistryServiceServer interface {
+type RegistryServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error)
 	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
 	Lookup(context.Context, *LookupRequest) (*LookupResponse, error)
-	mustEmbedUnimplementedRegistryServiceServer()
+	Watch(*WatchRequest, grpc.ServerStreamingServer[WatchResponse]) error
+	mustEmbedUnimplementedRegistryServer()
 }
 
-// UnimplementedRegistryServiceServer must be embedded to have
+// UnimplementedRegistryServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedRegistryServiceServer struct{}
+type UnimplementedRegistryServer struct{}
 
-func (UnimplementedRegistryServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
+func (UnimplementedRegistryServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedRegistryServiceServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
+func (UnimplementedRegistryServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedRegistryServiceServer) Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error) {
+func (UnimplementedRegistryServer) Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Deregister not implemented")
 }
-func (UnimplementedRegistryServiceServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
+func (UnimplementedRegistryServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Heartbeat not implemented")
 }
-func (UnimplementedRegistryServiceServer) Lookup(context.Context, *LookupRequest) (*LookupResponse, error) {
+func (UnimplementedRegistryServer) Lookup(context.Context, *LookupRequest) (*LookupResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Lookup not implemented")
 }
-func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
-func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
+func (UnimplementedRegistryServer) Watch(*WatchRequest, grpc.ServerStreamingServer[WatchResponse]) error {
+	return status.Error(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedRegistryServer) mustEmbedUnimplementedRegistryServer() {}
+func (UnimplementedRegistryServer) testEmbeddedByValue()                  {}
 
-// UnsafeRegistryServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to RegistryServiceServer will
+// UnsafeRegistryServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RegistryServer will
 // result in compilation errors.
-type UnsafeRegistryServiceServer interface {
-	mustEmbedUnimplementedRegistryServiceServer()
+type UnsafeRegistryServer interface {
+	mustEmbedUnimplementedRegistryServer()
 }
 
-func RegisterRegistryServiceServer(s grpc.ServiceRegistrar, srv RegistryServiceServer) {
-	// If the following call panics, it indicates UnimplementedRegistryServiceServer was
+func RegisterRegistryServer(s grpc.ServiceRegistrar, srv RegistryServer) {
+	// If the following call panics, it indicates UnimplementedRegistryServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&RegistryService_ServiceDesc, srv)
+	s.RegisterService(&Registry_ServiceDesc, srv)
 }
 
-func _RegistryService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Registry_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistryServiceServer).Register(ctx, in)
+		return srv.(RegistryServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Register_FullMethodName,
+		FullMethod: Registry_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Register(ctx, req.(*RegisterRequest))
+		return srv.(RegistryServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RegistryService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Registry_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistryServiceServer).Update(ctx, in)
+		return srv.(RegistryServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Update_FullMethodName,
+		FullMethod: Registry_Update_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Update(ctx, req.(*UpdateRequest))
+		return srv.(RegistryServer).Update(ctx, req.(*UpdateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RegistryService_Deregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Registry_Deregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeregisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistryServiceServer).Deregister(ctx, in)
+		return srv.(RegistryServer).Deregister(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Deregister_FullMethodName,
+		FullMethod: Registry_Deregister_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Deregister(ctx, req.(*DeregisterRequest))
+		return srv.(RegistryServer).Deregister(ctx, req.(*DeregisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RegistryService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Registry_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HeartbeatRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistryServiceServer).Heartbeat(ctx, in)
+		return srv.(RegistryServer).Heartbeat(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Heartbeat_FullMethodName,
+		FullMethod: Registry_Heartbeat_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Heartbeat(ctx, req.(*HeartbeatRequest))
+		return srv.(RegistryServer).Heartbeat(ctx, req.(*HeartbeatRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RegistryService_Lookup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Registry_Lookup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LookupRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RegistryServiceServer).Lookup(ctx, in)
+		return srv.(RegistryServer).Lookup(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Lookup_FullMethodName,
+		FullMethod: Registry_Lookup_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Lookup(ctx, req.(*LookupRequest))
+		return srv.(RegistryServer).Lookup(ctx, req.(*LookupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
+func _Registry_Watch_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(RegistryServer).Watch(m, &grpc.GenericServerStream[WatchRequest, WatchResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Registry_WatchServer = grpc.ServerStreamingServer[WatchResponse]
+
+// Registry_ServiceDesc is the grpc.ServiceDesc for Registry service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var RegistryService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "registry.RegistryService",
-	HandlerType: (*RegistryServiceServer)(nil),
+var Registry_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "registry.Registry",
+	HandlerType: (*RegistryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Register",
-			Handler:    _RegistryService_Register_Handler,
+			Handler:    _Registry_Register_Handler,
 		},
 		{
 			MethodName: "Update",
-			Handler:    _RegistryService_Update_Handler,
+			Handler:    _Registry_Update_Handler,
 		},
 		{
 			MethodName: "Deregister",
-			Handler:    _RegistryService_Deregister_Handler,
+			Handler:    _Registry_Deregister_Handler,
 		},
 		{
 			MethodName: "Heartbeat",
-			Handler:    _RegistryService_Heartbeat_Handler,
+			Handler:    _Registry_Heartbeat_Handler,
 		},
 		{
 			MethodName: "Lookup",
-			Handler:    _RegistryService_Lookup_Handler,
+			Handler:    _Registry_Lookup_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Watch",
+			Handler:       _Registry_Watch_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "proto/registry.proto",
 }

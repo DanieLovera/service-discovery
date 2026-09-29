@@ -34,6 +34,50 @@ func statusToProto(value registry.ServiceInstanceStatus) registrypb.ServiceInsta
 	}
 }
 
+func stateChangeTypeToProto(value registry.StateChangeType) registrypb.StateChangeType {
+	switch value {
+	case registry.StateChangeRegistered:
+		return registrypb.StateChangeType_STATE_CHANGE_TYPE_REGISTERED
+	case registry.StateChangeUpdated:
+		return registrypb.StateChangeType_STATE_CHANGE_TYPE_UPDATED
+	case registry.StateChangeHealthy:
+		return registrypb.StateChangeType_STATE_CHANGE_TYPE_HEALTHY
+	case registry.StateChangeExpired:
+		return registrypb.StateChangeType_STATE_CHANGE_TYPE_EXPIRED
+	case registry.StateChangeDeleted:
+		return registrypb.StateChangeType_STATE_CHANGE_TYPE_DELETED
+	default:
+		return registrypb.StateChangeType_STATE_CHANGE_TYPE_UNSPECIFIED
+	}
+}
+
+func watchSnapshotToProto(instances []registry.ServiceInstance) *registrypb.WatchResponse {
+	protoInstances := make([]*registrypb.ServiceInstance, 0, len(instances))
+
+	for _, instance := range instances {
+		protoInstances = append(protoInstances, serviceInstanceToProto(instance))
+	}
+
+	return &registrypb.WatchResponse{
+		Payload: &registrypb.WatchResponse_Snapshot{
+			Snapshot: &registrypb.WatchSnapshot{
+				Instances: protoInstances,
+			},
+		},
+	}
+}
+
+func watchEventToProto(change registry.StateChange) *registrypb.WatchResponse {
+	return &registrypb.WatchResponse{
+		Payload: &registrypb.WatchResponse_Event{
+			Event: &registrypb.WatchEvent{
+				Type:     stateChangeTypeToProto(change.Type),
+				Instance: serviceInstanceToProto(change.Instance),
+			},
+		},
+	}
+}
+
 func grpcError(err error) error {
 	switch {
 	case errors.Is(err, registry.ErrServiceInstanceAlreadyExists):

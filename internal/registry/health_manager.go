@@ -34,7 +34,7 @@ func NewHealthManager(backend Backend, logger *slog.Logger) *HealthManager {
 		wakeUp:    make(chan struct{}, 1),
 	}
 
-	backend.SubscribeStateChanges(manager.onStateChange)
+	backend.RegisterStateChangeHandler(manager.onStateChange)
 	manager.worker = New(manager.changes, manager.errs, manager.stateChangeHandler)
 
 	return manager

@@ -9,16 +9,22 @@ import (
 )
 
 type Handler struct {
-	registrypb.UnimplementedRegistryServiceServer
+	registrypb.UnimplementedRegistryServer
 
 	registryManager *registry.RegistryManager
 	healthManager   *registry.HealthManager
+	watchManager    *registry.WatchManager
 }
 
-func NewHandler(registryManager *registry.RegistryManager, healthManager *registry.HealthManager) *Handler {
+func NewHandler(
+	registryManager *registry.RegistryManager,
+	healthManager *registry.HealthManager,
+	watchManager *registry.WatchManager,
+) *Handler {
 	return &Handler{
 		registryManager: registryManager,
 		healthManager:   healthManager,
+		watchManager:    watchManager,
 	}
 }
 
@@ -99,4 +105,28 @@ func (h *Handler) Lookup(ctx context.Context, req *registrypb.LookupRequest) (*r
 	}
 
 	return response, nil
+}
+
+func (h *Handler) Watch(req *registrypb.WatchRequest, stream registrypb.Registry_WatchServer) error {
+	snaptshot, subscriber, cleanup, err := h.watchManager.Watch(stream.Context(), req.GetServiceName())
+	if err != nil {
+		return grpcError(err)
+	}
+	defer cleanup()
+
+	if err := stream.Send(watchSnapshotToProto(snaptshot)); err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case change := <-subscriber.Events():
+			if err := stream.Send(watchEventToProto(change)); err != nil {
+				return err
+			}
+
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		}
+	}
 }

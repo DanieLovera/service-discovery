@@ -12,5 +12,5 @@ type Backend interface {
 	Expire(ctx context.Context, id ServiceInstanceID) error
 	Recover(ctx context.Context, id ServiceInstanceID) error
 
-	SubscribeStateChanges(handler StateChangeHandler)
+	RegisterStateChangeHandler(handler StateChangeHandler)
 }
