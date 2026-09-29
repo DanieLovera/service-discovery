@@ -73,6 +73,64 @@ func (ServiceInstanceStatus) EnumDescriptor() ([]byte, []int) {
 	return file_proto_registry_proto_rawDescGZIP(), []int{0}
 }
 
+type StateChangeType int32
+
+const (
+	StateChangeType_STATE_CHANGE_TYPE_UNSPECIFIED StateChangeType = 0
+	StateChangeType_STATE_CHANGE_TYPE_REGISTERED  StateChangeType = 1
+	StateChangeType_STATE_CHANGE_TYPE_UPDATED     StateChangeType = 2
+	StateChangeType_STATE_CHANGE_TYPE_HEALTHY     StateChangeType = 3
+	StateChangeType_STATE_CHANGE_TYPE_EXPIRED     StateChangeType = 4
+	StateChangeType_STATE_CHANGE_TYPE_DELETED     StateChangeType = 5
+)
+
+// Enum value maps for StateChangeType.
+var (
+	StateChangeType_name = map[int32]string{
+		0: "STATE_CHANGE_TYPE_UNSPECIFIED",
+		1: "STATE_CHANGE_TYPE_REGISTERED",
+		2: "STATE_CHANGE_TYPE_UPDATED",
+		3: "STATE_CHANGE_TYPE_HEALTHY",
+		4: "STATE_CHANGE_TYPE_EXPIRED",
+		5: "STATE_CHANGE_TYPE_DELETED",
+	}
+	StateChangeType_value = map[string]int32{
+		"STATE_CHANGE_TYPE_UNSPECIFIED": 0,
+		"STATE_CHANGE_TYPE_REGISTERED":  1,
+		"STATE_CHANGE_TYPE_UPDATED":     2,
+		"STATE_CHANGE_TYPE_HEALTHY":     3,
+		"STATE_CHANGE_TYPE_EXPIRED":     4,
+		"STATE_CHANGE_TYPE_DELETED":     5,
+	}
+)
+
+func (x StateChangeType) Enum() *StateChangeType {
+	p := new(StateChangeType)
+	*p = x
+	return p
+}
+
+func (x StateChangeType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (StateChangeType) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_registry_proto_enumTypes[1].Descriptor()
+}
+
+func (StateChangeType) Type() protoreflect.EnumType {
+	return &file_proto_registry_proto_enumTypes[1]
+}
+
+func (x StateChangeType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use StateChangeType.Descriptor instead.
+func (StateChangeType) EnumDescriptor() ([]byte, []int) {
+	return file_proto_registry_proto_rawDescGZIP(), []int{1}
+}
+
 type RegisterRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	ServiceName         string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
@@ -653,6 +711,228 @@ func (x *ServiceInstance) GetStatus() ServiceInstanceStatus {
 	return ServiceInstanceStatus_SERVICE_INSTANCE_STATUS_UNSPECIFIED
 }
 
+type WatchRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchRequest) Reset() {
+	*x = WatchRequest{}
+	mi := &file_proto_registry_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchRequest) ProtoMessage() {}
+
+func (x *WatchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_registry_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchRequest.ProtoReflect.Descriptor instead.
+func (*WatchRequest) Descriptor() ([]byte, []int) {
+	return file_proto_registry_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *WatchRequest) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
+}
+
+type WatchResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*WatchResponse_Snapshot
+	//	*WatchResponse_Event
+	Payload       isWatchResponse_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchResponse) Reset() {
+	*x = WatchResponse{}
+	mi := &file_proto_registry_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchResponse) ProtoMessage() {}
+
+func (x *WatchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_registry_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchResponse.ProtoReflect.Descriptor instead.
+func (*WatchResponse) Descriptor() ([]byte, []int) {
+	return file_proto_registry_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *WatchResponse) GetPayload() isWatchResponse_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *WatchResponse) GetSnapshot() *WatchSnapshot {
+	if x != nil {
+		if x, ok := x.Payload.(*WatchResponse_Snapshot); ok {
+			return x.Snapshot
+		}
+	}
+	return nil
+}
+
+func (x *WatchResponse) GetEvent() *WatchEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WatchResponse_Event); ok {
+			return x.Event
+		}
+	}
+	return nil
+}
+
+type isWatchResponse_Payload interface {
+	isWatchResponse_Payload()
+}
+
+type WatchResponse_Snapshot struct {
+	Snapshot *WatchSnapshot `protobuf:"bytes,1,opt,name=snapshot,proto3,oneof"`
+}
+
+type WatchResponse_Event struct {
+	Event *WatchEvent `protobuf:"bytes,2,opt,name=event,proto3,oneof"`
+}
+
+func (*WatchResponse_Snapshot) isWatchResponse_Payload() {}
+
+func (*WatchResponse_Event) isWatchResponse_Payload() {}
+
+type WatchSnapshot struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Instances     []*ServiceInstance     `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchSnapshot) Reset() {
+	*x = WatchSnapshot{}
+	mi := &file_proto_registry_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchSnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchSnapshot) ProtoMessage() {}
+
+func (x *WatchSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_registry_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchSnapshot.ProtoReflect.Descriptor instead.
+func (*WatchSnapshot) Descriptor() ([]byte, []int) {
+	return file_proto_registry_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *WatchSnapshot) GetInstances() []*ServiceInstance {
+	if x != nil {
+		return x.Instances
+	}
+	return nil
+}
+
+type WatchEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          StateChangeType        `protobuf:"varint,1,opt,name=type,proto3,enum=registry.StateChangeType" json:"type,omitempty"`
+	Instance      *ServiceInstance       `protobuf:"bytes,2,opt,name=instance,proto3" json:"instance,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchEvent) Reset() {
+	*x = WatchEvent{}
+	mi := &file_proto_registry_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchEvent) ProtoMessage() {}
+
+func (x *WatchEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_registry_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchEvent.ProtoReflect.Descriptor instead.
+func (*WatchEvent) Descriptor() ([]byte, []int) {
+	return file_proto_registry_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *WatchEvent) GetType() StateChangeType {
+	if x != nil {
+		return x.Type
+	}
+	return StateChangeType_STATE_CHANGE_TYPE_UNSPECIFIED
+}
+
+func (x *WatchEvent) GetInstance() *ServiceInstance {
+	if x != nil {
+		return x.Instance
+	}
+	return nil
+}
+
 var File_proto_registry_proto protoreflect.FileDescriptor
 
 const file_proto_registry_proto_rawDesc = "" +
@@ -698,19 +978,39 @@ const file_proto_registry_proto_rawDesc = "" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x16\n" +
 	"\x06weight\x18\x04 \x01(\x05R\x06weight\x122\n" +
 	"\x15heartbeat_interval_ms\x18\x05 \x01(\x03R\x13heartbeatIntervalMs\x127\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x1f.registry.ServiceInstanceStatusR\x06status*\xaf\x01\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1f.registry.ServiceInstanceStatusR\x06status\"1\n" +
+	"\fWatchRequest\x12!\n" +
+	"\fservice_name\x18\x01 \x01(\tR\vserviceName\"\x7f\n" +
+	"\rWatchResponse\x125\n" +
+	"\bsnapshot\x18\x01 \x01(\v2\x17.registry.WatchSnapshotH\x00R\bsnapshot\x12,\n" +
+	"\x05event\x18\x02 \x01(\v2\x14.registry.WatchEventH\x00R\x05eventB\t\n" +
+	"\apayload\"H\n" +
+	"\rWatchSnapshot\x127\n" +
+	"\tinstances\x18\x01 \x03(\v2\x19.registry.ServiceInstanceR\tinstances\"r\n" +
+	"\n" +
+	"WatchEvent\x12-\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x19.registry.StateChangeTypeR\x04type\x125\n" +
+	"\binstance\x18\x02 \x01(\v2\x19.registry.ServiceInstanceR\binstance*\xaf\x01\n" +
 	"\x15ServiceInstanceStatus\x12'\n" +
 	"#SERVICE_INSTANCE_STATUS_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fSERVICE_INSTANCE_STATUS_HEALTHY\x10\x01\x12#\n" +
 	"\x1fSERVICE_INSTANCE_STATUS_EXPIRED\x10\x02\x12#\n" +
-	"\x1fSERVICE_INSTANCE_STATUS_DELETED\x10\x032\xdd\x02\n" +
-	"\x0fRegistryService\x12A\n" +
+	"\x1fSERVICE_INSTANCE_STATUS_DELETED\x10\x03*\xd2\x01\n" +
+	"\x0fStateChangeType\x12!\n" +
+	"\x1dSTATE_CHANGE_TYPE_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cSTATE_CHANGE_TYPE_REGISTERED\x10\x01\x12\x1d\n" +
+	"\x19STATE_CHANGE_TYPE_UPDATED\x10\x02\x12\x1d\n" +
+	"\x19STATE_CHANGE_TYPE_HEALTHY\x10\x03\x12\x1d\n" +
+	"\x19STATE_CHANGE_TYPE_EXPIRED\x10\x04\x12\x1d\n" +
+	"\x19STATE_CHANGE_TYPE_DELETED\x10\x052\x92\x03\n" +
+	"\bRegistry\x12A\n" +
 	"\bRegister\x12\x19.registry.RegisterRequest\x1a\x1a.registry.RegisterResponse\x12;\n" +
 	"\x06Update\x12\x17.registry.UpdateRequest\x1a\x18.registry.UpdateResponse\x12G\n" +
 	"\n" +
 	"Deregister\x12\x1b.registry.DeregisterRequest\x1a\x1c.registry.DeregisterResponse\x12D\n" +
 	"\tHeartbeat\x12\x1a.registry.HeartbeatRequest\x1a\x1b.registry.HeartbeatResponse\x12;\n" +
-	"\x06Lookup\x12\x17.registry.LookupRequest\x1a\x18.registry.LookupResponseB2Z0tpiii.local/daniel-tpiii/gen/registry;registrypbb\x06proto3"
+	"\x06Lookup\x12\x17.registry.LookupRequest\x1a\x18.registry.LookupResponse\x12:\n" +
+	"\x05Watch\x12\x16.registry.WatchRequest\x1a\x17.registry.WatchResponse0\x01B2Z0tpiii.local/daniel-tpiii/gen/registry;registrypbb\x06proto3"
 
 var (
 	file_proto_registry_proto_rawDescOnce sync.Once
@@ -724,40 +1024,52 @@ func file_proto_registry_proto_rawDescGZIP() []byte {
 	return file_proto_registry_proto_rawDescData
 }
 
-var file_proto_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_proto_registry_proto_goTypes = []any{
 	(ServiceInstanceStatus)(0), // 0: registry.ServiceInstanceStatus
-	(*RegisterRequest)(nil),    // 1: registry.RegisterRequest
-	(*RegisterResponse)(nil),   // 2: registry.RegisterResponse
-	(*UpdateRequest)(nil),      // 3: registry.UpdateRequest
-	(*UpdateResponse)(nil),     // 4: registry.UpdateResponse
-	(*DeregisterRequest)(nil),  // 5: registry.DeregisterRequest
-	(*DeregisterResponse)(nil), // 6: registry.DeregisterResponse
-	(*HeartbeatRequest)(nil),   // 7: registry.HeartbeatRequest
-	(*HeartbeatResponse)(nil),  // 8: registry.HeartbeatResponse
-	(*LookupRequest)(nil),      // 9: registry.LookupRequest
-	(*LookupResponse)(nil),     // 10: registry.LookupResponse
-	(*ServiceInstance)(nil),    // 11: registry.ServiceInstance
+	(StateChangeType)(0),       // 1: registry.StateChangeType
+	(*RegisterRequest)(nil),    // 2: registry.RegisterRequest
+	(*RegisterResponse)(nil),   // 3: registry.RegisterResponse
+	(*UpdateRequest)(nil),      // 4: registry.UpdateRequest
+	(*UpdateResponse)(nil),     // 5: registry.UpdateResponse
+	(*DeregisterRequest)(nil),  // 6: registry.DeregisterRequest
+	(*DeregisterResponse)(nil), // 7: registry.DeregisterResponse
+	(*HeartbeatRequest)(nil),   // 8: registry.HeartbeatRequest
+	(*HeartbeatResponse)(nil),  // 9: registry.HeartbeatResponse
+	(*LookupRequest)(nil),      // 10: registry.LookupRequest
+	(*LookupResponse)(nil),     // 11: registry.LookupResponse
+	(*ServiceInstance)(nil),    // 12: registry.ServiceInstance
+	(*WatchRequest)(nil),       // 13: registry.WatchRequest
+	(*WatchResponse)(nil),      // 14: registry.WatchResponse
+	(*WatchSnapshot)(nil),      // 15: registry.WatchSnapshot
+	(*WatchEvent)(nil),         // 16: registry.WatchEvent
 }
 var file_proto_registry_proto_depIdxs = []int32{
-	11, // 0: registry.LookupResponse.instances:type_name -> registry.ServiceInstance
+	12, // 0: registry.LookupResponse.instances:type_name -> registry.ServiceInstance
 	0,  // 1: registry.ServiceInstance.status:type_name -> registry.ServiceInstanceStatus
-	1,  // 2: registry.RegistryService.Register:input_type -> registry.RegisterRequest
-	3,  // 3: registry.RegistryService.Update:input_type -> registry.UpdateRequest
-	5,  // 4: registry.RegistryService.Deregister:input_type -> registry.DeregisterRequest
-	7,  // 5: registry.RegistryService.Heartbeat:input_type -> registry.HeartbeatRequest
-	9,  // 6: registry.RegistryService.Lookup:input_type -> registry.LookupRequest
-	2,  // 7: registry.RegistryService.Register:output_type -> registry.RegisterResponse
-	4,  // 8: registry.RegistryService.Update:output_type -> registry.UpdateResponse
-	6,  // 9: registry.RegistryService.Deregister:output_type -> registry.DeregisterResponse
-	8,  // 10: registry.RegistryService.Heartbeat:output_type -> registry.HeartbeatResponse
-	10, // 11: registry.RegistryService.Lookup:output_type -> registry.LookupResponse
-	7,  // [7:12] is the sub-list for method output_type
-	2,  // [2:7] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	15, // 2: registry.WatchResponse.snapshot:type_name -> registry.WatchSnapshot
+	16, // 3: registry.WatchResponse.event:type_name -> registry.WatchEvent
+	12, // 4: registry.WatchSnapshot.instances:type_name -> registry.ServiceInstance
+	1,  // 5: registry.WatchEvent.type:type_name -> registry.StateChangeType
+	12, // 6: registry.WatchEvent.instance:type_name -> registry.ServiceInstance
+	2,  // 7: registry.Registry.Register:input_type -> registry.RegisterRequest
+	4,  // 8: registry.Registry.Update:input_type -> registry.UpdateRequest
+	6,  // 9: registry.Registry.Deregister:input_type -> registry.DeregisterRequest
+	8,  // 10: registry.Registry.Heartbeat:input_type -> registry.HeartbeatRequest
+	10, // 11: registry.Registry.Lookup:input_type -> registry.LookupRequest
+	13, // 12: registry.Registry.Watch:input_type -> registry.WatchRequest
+	3,  // 13: registry.Registry.Register:output_type -> registry.RegisterResponse
+	5,  // 14: registry.Registry.Update:output_type -> registry.UpdateResponse
+	7,  // 15: registry.Registry.Deregister:output_type -> registry.DeregisterResponse
+	9,  // 16: registry.Registry.Heartbeat:output_type -> registry.HeartbeatResponse
+	11, // 17: registry.Registry.Lookup:output_type -> registry.LookupResponse
+	14, // 18: registry.Registry.Watch:output_type -> registry.WatchResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proto_registry_proto_init() }
@@ -766,13 +1078,17 @@ func file_proto_registry_proto_init() {
 		return
 	}
 	file_proto_registry_proto_msgTypes[8].OneofWrappers = []any{}
+	file_proto_registry_proto_msgTypes[12].OneofWrappers = []any{
+		(*WatchResponse_Snapshot)(nil),
+		(*WatchResponse_Event)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_registry_proto_rawDesc), len(file_proto_registry_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   11,
+			NumEnums:      2,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

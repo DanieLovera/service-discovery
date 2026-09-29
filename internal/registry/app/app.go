@@ -37,7 +37,8 @@ func New(params Params) (*App, error) {
 
 	registryManager := registry.NewRegistryManager(backend)
 	healthManager := registry.NewHealthManager(backend, params.Logger)
-	grpcHandler := grpc.NewHandler(registryManager, healthManager)
+	watchManager := registry.NewWatchManager(backend)
+	grpcHandler := grpc.NewHandler(registryManager, healthManager, watchManager)
 	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger)
 
 	processMetrics := metrics.New("registry", params.NodeID)
