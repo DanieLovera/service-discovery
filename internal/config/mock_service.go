@@ -20,6 +20,7 @@ type MockService struct {
 	ServiceName          string
 	InstanceID           string
 	HTTPAddress          string
+	AdvertiseAddress     string
 	ObservabilityAddress string
 	RegistryAddresses    []string
 	Weight               int
@@ -32,6 +33,7 @@ func LoadMockService() (MockService, error) {
 	if err != nil {
 		return MockService{}, err
 	}
+
 	interval, err := durationFromEnvOrDefault("HEARTBEAT_INTERVAL", defaultHeartbeatInterval)
 	if err != nil {
 		return MockService{}, err
@@ -41,6 +43,7 @@ func LoadMockService() (MockService, error) {
 		ServiceName:          strings.TrimSpace(os.Getenv("NAME")),
 		InstanceID:           strings.TrimSpace(os.Getenv("INSTANCE_ID")),
 		HTTPAddress:          stringFromEnvOrDefault("HTTP_ADDRESS", defaultMockHTTPAddress),
+		AdvertiseAddress:     strings.TrimSpace(os.Getenv("ADVERTISE_ADDRESS")),
 		ObservabilityAddress: stringFromEnvOrDefault("OBSERVABILITY_ADDRESS", defaultMockObservabilityAddress),
 		RegistryAddresses:    splitCSV(os.Getenv("REGISTRY_ADDRESSES")),
 		Weight:               weight,
@@ -50,16 +53,25 @@ func LoadMockService() (MockService, error) {
 			Format: stringFromEnvOrDefault("LOG_FORMAT", "json"),
 		},
 	}
+
 	var errs []error
+
 	if cfg.ServiceName == "" {
 		errs = append(errs, errors.New("NAME is required"))
 	}
+
 	if cfg.InstanceID == "" {
 		errs = append(errs, errors.New("INSTANCE_ID is required"))
 	}
+
+	if cfg.AdvertiseAddress == "" {
+		errs = append(errs, errors.New("ADVERTISE_ADDRESS is required"))
+	}
+
 	if len(cfg.RegistryAddresses) == 0 {
 		errs = append(errs, errors.New("REGISTRY_ADDRESSES is required"))
 	}
+
 	if cfg.Weight <= 0 {
 		errs = append(errs, errors.New("WEIGHT must be greater than zero"))
 	}
@@ -67,6 +79,7 @@ func LoadMockService() (MockService, error) {
 	if cfg.HeartbeatInterval <= 0 {
 		errs = append(errs, errors.New("HEARTBEAT_INTERVAL must be greater than zero"))
 	}
+
 	return cfg, errors.Join(errs...)
 }
 
@@ -75,10 +88,12 @@ func intFromEnvOrDefault(key string, fallback int) (int, error) {
 	if raw == "" {
 		return fallback, nil
 	}
+
 	v, err := strconv.Atoi(raw)
 	if err != nil {
 		return 0, fmt.Errorf("%s must be an integer: %w", key, err)
 	}
+
 	return v, nil
 }
 
@@ -87,9 +102,11 @@ func durationFromEnvOrDefault(key string, fallback time.Duration) (time.Duration
 	if raw == "" {
 		return fallback, nil
 	}
+
 	v, err := time.ParseDuration(raw)
 	if err != nil {
 		return 0, fmt.Errorf("%s must be a Go duration: %w", key, err)
 	}
+
 	return v, nil
 }
