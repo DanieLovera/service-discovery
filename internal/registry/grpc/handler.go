@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	registrypb "tpiii.local/daniel-tpiii/gen/registry"
 	"tpiii.local/daniel-tpiii/internal/registry"
 )
@@ -108,19 +111,23 @@ func (h *Handler) Lookup(ctx context.Context, req *registrypb.LookupRequest) (*r
 }
 
 func (h *Handler) Watch(req *registrypb.WatchRequest, stream registrypb.Registry_WatchServer) error {
-	snaptshot, subscriber, cleanup, err := h.watchManager.Watch(stream.Context(), req.GetServiceName())
+	snapshot, subscriber, cleanup, err := h.watchManager.Watch(stream.Context(), req.GetServiceName())
 	if err != nil {
 		return grpcError(err)
 	}
 	defer cleanup()
 
-	if err := stream.Send(watchSnapshotToProto(snaptshot)); err != nil {
+	if err := stream.Send(watchSnapshotToProto(snapshot)); err != nil {
 		return err
 	}
 
 	for {
 		select {
-		case change := <-subscriber.Events():
+		case change, ok := <-subscriber.Events():
+			if !ok {
+				return status.Error(codes.ResourceExhausted, "watch subscriber fell behind")
+			}
+
 			if err := stream.Send(watchEventToProto(change)); err != nil {
 				return err
 			}

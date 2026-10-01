@@ -13,25 +13,27 @@ const (
 )
 
 type HealthManager struct {
-	backend Backend
-	changes chan StateChange
-	errs    chan error
-	worker  *Worker[StateChange]
-	logger  *slog.Logger
+	backend       Backend
+	ttlMultiplier int
+	changes       chan StateChange
+	errs          chan error
+	worker        *Worker[StateChange]
+	logger        *slog.Logger
 
 	mu        sync.Mutex
 	deadlines map[ServiceInstanceID]time.Time
 	wakeUp    chan struct{}
 }
 
-func NewHealthManager(backend Backend, logger *slog.Logger) *HealthManager {
+func NewHealthManager(backend Backend, ttlMultiplier int, logger *slog.Logger) *HealthManager {
 	manager := &HealthManager{
-		backend:   backend,
-		changes:   make(chan StateChange, healthManagerChangesBufferSize),
-		errs:      make(chan error, healthManagerErrorsBufferSize),
-		logger:    logger,
-		deadlines: make(map[ServiceInstanceID]time.Time),
-		wakeUp:    make(chan struct{}, 1),
+		backend:       backend,
+		ttlMultiplier: ttlMultiplier,
+		changes:       make(chan StateChange, healthManagerChangesBufferSize),
+		errs:          make(chan error, healthManagerErrorsBufferSize),
+		logger:        logger,
+		deadlines:     make(map[ServiceInstanceID]time.Time),
+		wakeUp:        make(chan struct{}, 1),
 	}
 
 	backend.RegisterStateChangeHandler(manager.onStateChange)
@@ -60,7 +62,7 @@ func (h *HealthManager) Heartbeat(ctx context.Context, id ServiceInstanceID) err
 
 	switch instance.Status {
 	case ServiceInstanceStatusHealthy:
-		h.renewTTL(id, instance.HeartbeatInterval)
+		h.renewTTL(id, h.ttl(instance))
 		return nil
 
 	case ServiceInstanceStatusExpired:
@@ -68,7 +70,7 @@ func (h *HealthManager) Heartbeat(ctx context.Context, id ServiceInstanceID) err
 			return err
 		}
 
-		h.renewTTL(id, instance.HeartbeatInterval)
+		h.renewTTL(id, h.ttl(instance))
 		return nil
 
 	case ServiceInstanceStatusDeleted:
@@ -77,6 +79,10 @@ func (h *HealthManager) Heartbeat(ctx context.Context, id ServiceInstanceID) err
 	default:
 		return nil
 	}
+}
+
+func (h *HealthManager) ttl(instance ServiceInstance) time.Duration {
+	return instance.HeartbeatInterval * time.Duration(h.ttlMultiplier)
 }
 
 func (h *HealthManager) renewTTL(id ServiceInstanceID, ttl time.Duration) {
@@ -173,14 +179,22 @@ func (h *HealthManager) sendError(ctx context.Context, err error) {
 }
 
 func (h *HealthManager) onStateChange(change StateChange) {
-	h.changes <- change
+	if change.Type != StateChangeExpired || !h.hasValidTTL(change.Instance.ID) {
+		return
+	}
+
+	select {
+	case h.changes <- change:
+	default:
+		h.logger.Warn(
+			"Health manager queue full, dropping state change",
+			"service_name", change.Instance.ID.ServiceName,
+			"instance_id", change.Instance.ID.InstanceID,
+		)
+	}
 }
 
 func (h *HealthManager) stateChangeHandler(ctx context.Context, change StateChange) error {
-	if change.Type != StateChangeExpired {
-		return nil
-	}
-
 	id := change.Instance.ID
 	if !h.hasValidTTL(id) {
 		return nil

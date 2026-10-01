@@ -25,8 +25,9 @@ type Instance struct {
 }
 
 type Client struct {
-	addresses []string
-	current   int
+	addresses      []string
+	current        int
+	requestTimeout time.Duration
 
 	conn   *grpc.ClientConn
 	client registrypb.RegistryClient
@@ -34,13 +35,14 @@ type Client struct {
 	mu sync.Mutex
 }
 
-func NewClient(addresses []string) (*Client, error) {
+func NewClient(addresses []string, requestTimeout time.Duration) (*Client, error) {
 	if len(addresses) == 0 {
 		return nil, errors.New("at least one registry address is required")
 	}
 
 	client := &Client{
-		addresses: slices.Clone(addresses),
+		addresses:      slices.Clone(addresses),
+		requestTimeout: requestTimeout,
 	}
 
 	if err := client.connect(0); err != nil {
@@ -51,7 +53,7 @@ func NewClient(addresses []string) (*Client, error) {
 }
 
 func (c *Client) Register(ctx context.Context, instance Instance) error {
-	return c.execute(ctx, func(client registrypb.RegistryClient) error {
+	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
 		_, err := client.Register(ctx, &registrypb.RegisterRequest{
 			ServiceName:         instance.ServiceName,
 			InstanceId:          instance.InstanceID,
@@ -64,7 +66,7 @@ func (c *Client) Register(ctx context.Context, instance Instance) error {
 }
 
 func (c *Client) Heartbeat(ctx context.Context, instance Instance) error {
-	return c.execute(ctx, func(client registrypb.RegistryClient) error {
+	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
 		_, err := client.Heartbeat(ctx, &registrypb.HeartbeatRequest{
 			ServiceName: instance.ServiceName,
 			InstanceId:  instance.InstanceID,
@@ -74,7 +76,7 @@ func (c *Client) Heartbeat(ctx context.Context, instance Instance) error {
 }
 
 func (c *Client) Deregister(ctx context.Context, instance Instance) error {
-	return c.execute(ctx, func(client registrypb.RegistryClient) error {
+	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
 		_, err := client.Deregister(ctx, &registrypb.DeregisterRequest{
 			ServiceName: instance.ServiceName,
 			InstanceId:  instance.InstanceID,
@@ -83,7 +85,10 @@ func (c *Client) Deregister(ctx context.Context, instance Instance) error {
 	})
 }
 
-func (c *Client) execute(ctx context.Context, operation func(registrypb.RegistryClient) error) error {
+func (c *Client) execute(
+	ctx context.Context,
+	operation func(context.Context, registrypb.RegistryClient) error,
+) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -104,12 +109,19 @@ func (c *Client) execute(ctx context.Context, operation func(registrypb.Registry
 			}
 		}
 
-		err := operation(c.client)
+		attemptCtx, cancel := context.WithTimeout(ctx, c.requestTimeout)
+		err := operation(attemptCtx, c.client)
+		cancel()
+
 		if err == nil {
 			return nil
 		}
 
-		if status.Code(err) != codes.Unavailable {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		if !isRetryable(err) {
 			return err
 		}
 
@@ -117,6 +129,15 @@ func (c *Client) execute(ctx context.Context, operation func(registrypb.Registry
 	}
 
 	return fmt.Errorf("all registry nodes unavailable: %w", errors.Join(errs...))
+}
+
+func isRetryable(err error) bool {
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded:
+		return true
+	default:
+		return false
+	}
 }
 
 func (c *Client) connect(index int) error {

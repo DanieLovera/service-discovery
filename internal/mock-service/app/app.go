@@ -39,7 +39,9 @@ func New(params Params) (*App, error) {
 		return nil, errors.New("at least one registry address is required")
 	}
 
-	registryClient, err := registry.NewClient(params.RegistryAddresses)
+	requestTimeout := params.HeartbeatInterval / time.Duration(len(params.RegistryAddresses))
+
+	registryClient, err := registry.NewClient(params.RegistryAddresses, requestTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("initialize registry client: %w", err)
 	}
