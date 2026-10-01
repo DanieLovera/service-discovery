@@ -116,10 +116,10 @@ func newBackend(params Params) (registry.Backend, error) {
 	switch params.Backend {
 	case "cp":
 		// TODO: Implement CP backend
-		return registry.NewBackendMemory(), nil
+		return nil, nil
 	case "ap":
 		// TODO: Implement AP backend
-		return registry.NewBackendMemory(), nil
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
 	}
