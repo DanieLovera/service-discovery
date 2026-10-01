@@ -34,9 +34,10 @@ services:
       args:
         SERVICE: mock-service
     environment:
-      NAME: example-service
+      NAME: mock-service
       INSTANCE_ID: mock-service-1
       REGISTRY_ADDRESSES: registry:7000
+      ADVERTISE_ADDRESS: mock-service:9000
     ports:
       - "9000:9000"   # HTTP server
       - "10020:10020" # observability server
