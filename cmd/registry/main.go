@@ -43,6 +43,7 @@ func start() (err error) {
 		GRPCAddress:          cfg.GRPCAddress,
 		ObservabilityAddress: cfg.ObservabilityAddress,
 		ClusterMembers:       cfg.ClusterMembers,
+		TTLMultiplier:        cfg.TTLMultiplier,
 		Logger:               logger,
 	})
 	if err != nil {

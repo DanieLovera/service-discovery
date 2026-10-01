@@ -79,10 +79,18 @@ func (w *WatchManager) onStateChange(change StateChange) {
 	serviceName := change.Instance.ID.ServiceName
 
 	w.mu.Lock()
-	subscribers := slices.Clone(w.subscribers[serviceName])
-	w.mu.Unlock()
+	defer w.mu.Unlock()
 
-	for _, subscriber := range subscribers {
-		subscriber.events <- change
-	}
+	w.subscribers[serviceName] = slices.DeleteFunc(
+		w.subscribers[serviceName],
+		func(s *Subscriber) bool {
+			select {
+			case s.events <- change:
+				return false
+			default:
+				close(s.events)
+				return true
+			}
+		},
+	)
 }

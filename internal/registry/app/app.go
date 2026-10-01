@@ -19,6 +19,7 @@ type Params struct {
 	GRPCAddress          string
 	ObservabilityAddress string
 	ClusterMembers       []string
+	TTLMultiplier        int
 	Logger               *slog.Logger
 }
 
@@ -36,7 +37,7 @@ func New(params Params) (*App, error) {
 	}
 
 	registryManager := registry.NewRegistryManager(backend)
-	healthManager := registry.NewHealthManager(backend, params.Logger)
+	healthManager := registry.NewHealthManager(backend, params.TTLMultiplier, params.Logger)
 	watchManager := registry.NewWatchManager(backend)
 	grpcHandler := grpc.NewHandler(registryManager, healthManager, watchManager)
 	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger)
