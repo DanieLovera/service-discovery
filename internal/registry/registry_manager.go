@@ -45,6 +45,10 @@ func (r *RegistryManager) Lookup(ctx context.Context, id ServiceInstanceID) ([]S
 		return nil, err
 	}
 
+	return healthyInstances(instances), nil
+}
+
+func healthyInstances(instances []ServiceInstance) []ServiceInstance {
 	healthy := make([]ServiceInstance, 0, len(instances))
 	for _, instance := range instances {
 		if instance.Status == ServiceInstanceStatusHealthy {
@@ -52,5 +56,5 @@ func (r *RegistryManager) Lookup(ctx context.Context, id ServiceInstanceID) ([]S
 		}
 	}
 
-	return healthy, nil
+	return healthy
 }
