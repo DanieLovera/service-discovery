@@ -34,12 +34,12 @@ func start() (err error) {
 		return fmt.Errorf("initialize logger: %w", err)
 	}
 
-	ctx, stopCtx := signal.NotifyContext(
+	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		os.Interrupt,
 		syscall.SIGTERM,
 	)
-	defer stopCtx()
+	defer stop()
 
 	application, err := app.New(app.Params{
 		ServiceName:          cfg.ServiceName,
@@ -57,7 +57,7 @@ func start() (err error) {
 	}
 
 	defer func() {
-		err = errors.Join(err, stop(application))
+		err = errors.Join(err, shutdown(application))
 	}()
 
 	if err := application.Start(ctx); err != nil {
@@ -67,12 +67,12 @@ func start() (err error) {
 	return nil
 }
 
-func stop(application *app.App) error {
+func shutdown(application *app.App) error {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		shutdownTimeout,
 	)
 	defer cancel()
 
-	return application.Stop(ctx)
+	return application.Shutdown(ctx)
 }

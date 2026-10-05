@@ -53,7 +53,7 @@ func (w *WatchManager) Watch(ctx context.Context, serviceName string) ([]Service
 		return nil, nil, nil, err
 	}
 
-	return snapshot, subscriber, cleanup, nil
+	return healthyInstances(snapshot), subscriber, cleanup, nil
 }
 
 func (w *WatchManager) subscribe(serviceName string, subscriber *Subscriber) {

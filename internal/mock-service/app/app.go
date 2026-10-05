@@ -112,7 +112,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 }
 
-func (a *App) Stop(ctx context.Context) error {
+func (a *App) Shutdown(ctx context.Context) error {
 	defer a.logger.Info("Mock service stopped")
 
 	a.observabilityServer.SetReady(false)

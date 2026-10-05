@@ -6,11 +6,15 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"time"
 
 	googlegrpc "google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	registrypb "tpiii.local/daniel-tpiii/gen/registry"
 )
+
+const keepaliveMinTime = 5 * time.Second
 
 type Server struct {
 	grpcServer *googlegrpc.Server
@@ -19,7 +23,12 @@ type Server struct {
 }
 
 func NewServer(address string, handler registrypb.RegistryServer, logger *slog.Logger) *Server {
-	grpcServer := googlegrpc.NewServer()
+	grpcServer := googlegrpc.NewServer(
+		googlegrpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             keepaliveMinTime,
+			PermitWithoutStream: true,
+		}),
+	)
 	registrypb.RegisterRegistryServer(grpcServer, handler)
 
 	return &Server{
