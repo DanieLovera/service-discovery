@@ -9,9 +9,12 @@ services:
       INSTANCE_ID: registry-1
       BACKEND: ap
       CLUSTER_MEMBERS: registry:7000
+      GRPC_ADDRESS: 0.0.0.0:7000
+      OBSERVABILITY_ADDRESS: 0.0.0.0:10000
+      HEARTBEAT_TTL_MULTIPLIER: 3
     ports:
-      - "7000:7000"   # gRPC server
-      - "10000:10000" # observability server
+      - "7000:7000"
+      - "10000:10000"
 
   load-balancer:
     image: daanilo/load-balancer:dev
@@ -21,9 +24,15 @@ services:
         SERVICE: load-balancer
     environment:
       REGISTRY_ADDRESSES: registry:7000
+      SERVICES: mock-service:round-robin
+      HTTP_ADDRESS: 0.0.0.0:8000
+      OBSERVABILITY_ADDRESS: 0.0.0.0:10010
+      REGISTRY_RETRY_INTERVAL: 1s
+      REGISTRY_KEEPALIVE_TIME: 10s
+      REGISTRY_KEEPALIVE_TIMEOUT: 5s
     ports:
-      - "8000:8000"   # HTTP server
-      - "10010:10010" # observability server
+      - "8000:8000"
+      - "10010:10010"
     depends_on:
       - registry
 
@@ -38,9 +47,13 @@ services:
       INSTANCE_ID: mock-service-1
       REGISTRY_ADDRESSES: registry:7000
       ADVERTISE_ADDRESS: mock-service:9000
+      HTTP_ADDRESS: 0.0.0.0:9000
+      OBSERVABILITY_ADDRESS: 0.0.0.0:10020
+      WEIGHT: 1
+      HEARTBEAT_INTERVAL: 5s
     ports:
-      - "9000:9000"   # HTTP server
-      - "10020:10020" # observability server
+      - "9000:9000"
+      - "10020:10020"
     depends_on:
       - registry
 

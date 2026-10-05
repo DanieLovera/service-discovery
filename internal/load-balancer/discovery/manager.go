@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -17,7 +18,9 @@ type Manager struct {
 	keepalive     registry.KeepaliveConfig
 	logger        *slog.Logger
 
-	wg sync.WaitGroup
+	client *registry.Client
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
 func NewManager(
@@ -37,33 +40,49 @@ func NewManager(
 }
 
 func (m *Manager) Start(ctx context.Context) error {
-	for serviceName, servicePool := range m.pools {
-		client, err := registry.NewClient(m.addresses, m.keepalive)
-		if err != nil {
-			return err
-		}
+	client, err := registry.NewClient(m.addresses, m.keepalive)
+	if err != nil {
+		return err
+	}
 
+	m.client = client
+	ctx, m.cancel = context.WithCancel(ctx)
+
+	for serviceName, servicePool := range m.pools {
 		m.wg.Go(func() {
-			m.watch(ctx, client, serviceName, servicePool)
+			m.watch(ctx, serviceName, servicePool)
 		})
 	}
 
 	return nil
 }
 
-func (m *Manager) Wait() {
-	m.wg.Wait()
-}
+func (m *Manager) Shutdown(ctx context.Context) error {
+	if m.cancel == nil {
+		return nil
+	}
 
-func (m *Manager) watch(ctx context.Context, registry *registry.Client, serviceName string, servicePool *loadbalancer.ServicePool) {
-	defer func() {
-		if err := registry.Close(); err != nil {
-			m.logger.Error("Failed to close registry client", "service", serviceName, "error", err)
-		}
+	m.cancel()
+
+	done := make(chan struct{})
+	go func() {
+		m.wg.Wait()
+		close(done)
 	}()
 
+	var err error
+	select {
+	case <-done:
+	case <-ctx.Done():
+		err = ctx.Err()
+	}
+
+	return errors.Join(err, m.client.Close())
+}
+
+func (m *Manager) watch(ctx context.Context, serviceName string, servicePool *loadbalancer.ServicePool) {
 	for {
-		err := m.syncPool(ctx, registry, serviceName, servicePool)
+		err := m.syncPool(ctx, serviceName, servicePool)
 		if ctx.Err() != nil {
 			return
 		}
@@ -78,8 +97,8 @@ func (m *Manager) watch(ctx context.Context, registry *registry.Client, serviceN
 	}
 }
 
-func (m *Manager) syncPool(ctx context.Context, registry *registry.Client, serviceName string, servicePool *loadbalancer.ServicePool) error {
-	snapshot, subscription, err := registry.Watch(ctx, serviceName)
+func (m *Manager) syncPool(ctx context.Context, serviceName string, servicePool *loadbalancer.ServicePool) error {
+	snapshot, subscription, err := m.client.Watch(ctx, serviceName)
 	if err != nil {
 		return err
 	}

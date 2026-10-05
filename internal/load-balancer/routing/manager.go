@@ -11,26 +11,26 @@ var (
 	ErrNoInstances    = errors.New("no healthy instances available")
 )
 
-type Route struct {
+type Upstream struct {
 	Pool     *loadbalancer.ServicePool
 	Strategy Strategy
 }
 
 type Manager struct {
-	routes map[string]Route
+	upstreams map[string]Upstream
 }
 
-func NewManager(routes map[string]Route) *Manager {
-	return &Manager{routes: routes}
+func NewManager(upstreams map[string]Upstream) *Manager {
+	return &Manager{upstreams: upstreams}
 }
 
 func (m *Manager) Pick(serviceName string) (loadbalancer.ServiceInstance, func(), error) {
-	route, ok := m.routes[serviceName]
+	upstream, ok := m.upstreams[serviceName]
 	if !ok {
 		return loadbalancer.ServiceInstance{}, nil, ErrUnknownService
 	}
 
-	instance, done, ok := route.Strategy.Pick(route.Pool.Instances())
+	instance, done, ok := upstream.Strategy.Pick(upstream.Pool.Instances())
 	if !ok {
 		return loadbalancer.ServiceInstance{}, nil, ErrNoInstances
 	}

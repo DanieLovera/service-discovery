@@ -34,8 +34,8 @@ func start() (err error) {
 		return fmt.Errorf("initialize logger: %w", err)
 	}
 
-	ctx, stopCtx := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stopCtx()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	application, err := app.New(app.Params{
 		NodeID:               cfg.NodeID,
@@ -49,8 +49,9 @@ func start() (err error) {
 	if err != nil {
 		return fmt.Errorf("initialize registry application: %w", err)
 	}
+
 	defer func() {
-		err = errors.Join(err, stop(application))
+		err = errors.Join(err, shutdown(application))
 	}()
 
 	if err := application.Start(ctx); err != nil {
@@ -59,9 +60,9 @@ func start() (err error) {
 	return nil
 }
 
-func stop(application *app.App) error {
+func shutdown(application *app.App) error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	return application.Stop(ctx)
+	return application.Shutdown(ctx)
 }

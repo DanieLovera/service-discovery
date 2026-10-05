@@ -4,15 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/resolver"
+	"google.golang.org/grpc/resolver/manual"
 
 	registrypb "tpiii.local/daniel-tpiii/gen/registry"
 	loadbalancer "tpiii.local/daniel-tpiii/internal/load-balancer"
+)
+
+const (
+	resolverScheme = "registry"
+	serviceConfig  = `{"loadBalancingConfig": [{"round_robin": {}}]}`
 )
 
 type KeepaliveConfig struct {
@@ -21,10 +27,6 @@ type KeepaliveConfig struct {
 }
 
 type Client struct {
-	addresses []string
-	current   int
-	keepalive KeepaliveConfig
-
 	conn   *grpc.ClientConn
 	client registrypb.RegistryClient
 }
@@ -34,73 +36,52 @@ func NewClient(addresses []string, keepaliveConfig KeepaliveConfig) (*Client, er
 		return nil, errors.New("at least one registry address is required")
 	}
 
-	client := &Client{
-		addresses: slices.Clone(addresses),
-		keepalive: keepaliveConfig,
+	resolverAddresses := make([]resolver.Address, 0, len(addresses))
+	for _, address := range addresses {
+		resolverAddresses = append(resolverAddresses, resolver.Address{Addr: address})
 	}
 
-	if err := client.connect(0); err != nil {
-		return nil, err
+	builder := manual.NewBuilderWithScheme(resolverScheme)
+	builder.InitialState(resolver.State{Addresses: resolverAddresses})
+
+	conn, err := grpc.NewClient(
+		resolverScheme+":///",
+		grpc.WithResolvers(builder),
+		grpc.WithDefaultServiceConfig(serviceConfig),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                keepaliveConfig.Time,
+			Timeout:             keepaliveConfig.Timeout,
+			PermitWithoutStream: true,
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create registry connection: %w", err)
 	}
 
-	return client, nil
+	return &Client{
+		conn:   conn,
+		client: registrypb.NewRegistryClient(conn),
+	}, nil
 }
 
 func (c *Client) Watch(ctx context.Context, serviceName string) ([]loadbalancer.ServiceInstance, *Subscription, error) {
 	stream, err := c.client.Watch(ctx, &registrypb.WatchRequest{ServiceName: serviceName})
 	if err != nil {
-		return nil, nil, c.failover(ctx, err)
+		return nil, nil, err
 	}
 
 	response, err := stream.Recv()
 	if err != nil {
-		return nil, nil, c.failover(ctx, err)
+		return nil, nil, err
 	}
 
 	snapshot := response.GetSnapshot()
 	if snapshot == nil {
-		return nil, nil, c.failover(ctx, errors.New("watch stream did not start with a snapshot"))
+		return nil, nil, errors.New("watch stream did not start with a snapshot")
 	}
 
-	return serviceInstancesFromProto(snapshot.GetInstances()), &Subscription{ctx: ctx, client: c, stream: stream}, nil
-}
-
-func (c *Client) failover(ctx context.Context, err error) error {
-	if ctx.Err() != nil {
-		return ctx.Err()
-	}
-
-	next := (c.current + 1) % len(c.addresses)
-	if connErr := c.connect(next); connErr != nil {
-		return errors.Join(err, connErr)
-	}
-
-	return err
-}
-
-func (c *Client) connect(index int) error {
-	conn, err := grpc.NewClient(
-		c.addresses[index],
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                c.keepalive.Time,
-			Timeout:             c.keepalive.Timeout,
-			PermitWithoutStream: true,
-		}),
-	)
-	if err != nil {
-		return fmt.Errorf("create registry connection to %s: %w", c.addresses[index], err)
-	}
-
-	if c.conn != nil {
-		_ = c.conn.Close()
-	}
-
-	c.conn = conn
-	c.client = registrypb.NewRegistryClient(conn)
-	c.current = index
-
-	return nil
+	return serviceInstancesFromProto(snapshot.GetInstances()), &Subscription{stream: stream}, nil
 }
 
 func (c *Client) Close() error {

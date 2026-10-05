@@ -7,6 +7,7 @@ import (
 
 func TestLoadLoadBalancer(t *testing.T) {
 	t.Setenv("REGISTRY_ADDRESSES", "registry-1:7000,registry-2:7000")
+	t.Setenv("SERVICES", "mock-service:round-robin")
 
 	cfg, err := LoadLoadBalancer()
 	if err != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,27 +10,23 @@ import (
 	"time"
 
 	"tpiii.local/daniel-tpiii/internal/config"
+	"tpiii.local/daniel-tpiii/internal/load-balancer/app"
 	"tpiii.local/daniel-tpiii/internal/logging"
-	"tpiii.local/daniel-tpiii/internal/metrics"
-	"tpiii.local/daniel-tpiii/internal/observability"
 )
 
 const shutdownTimeout = 5 * time.Second
 
 func main() {
-	if err := run(); err != nil {
+	if err := start(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
+func start() (err error) {
 	cfg, err := config.LoadLoadBalancer()
 	if err != nil {
-		return fmt.Errorf("load load-balancer configuration: %w", err)
+		return fmt.Errorf("load load balancer configuration: %w", err)
 	}
 
 	logger, err := logging.New(cfg.Log)
@@ -37,39 +34,37 @@ func run() error {
 		return fmt.Errorf("initialize logger: %w", err)
 	}
 
-	processMetrics := metrics.New("load-balancer", "load-balancer")
-	observabilityServer := observability.NewServer(cfg.ObservabilityAddress, processMetrics.Handler(), logger)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	serveErrs, err := observabilityServer.Serve()
+	application, err := app.New(app.Params{
+		HTTPAddress:              cfg.HTTPAddress,
+		ObservabilityAddress:     cfg.ObservabilityAddress,
+		RegistryAddresses:        cfg.RegistryAddresses,
+		RegistryRetryInterval:    cfg.RegistryRetryInterval,
+		RegistryKeepaliveTime:    cfg.RegistryKeepaliveTime,
+		RegistryKeepaliveTimeout: cfg.RegistryKeepaliveTimeout,
+		Services:                 cfg.Services,
+		Logger:                   logger,
+	})
 	if err != nil {
-		return fmt.Errorf("serve observability server: %w", err)
+		return fmt.Errorf("initialize load balancer application: %w", err)
 	}
 
-	observabilityServer.SetReady(true)
+	defer func() {
+		err = errors.Join(err, shutdown(application))
+	}()
 
-	logger.Info(
-		"Load Balancer started",
-		"http_address", cfg.HTTPAddress,
-		"registry_addresses", cfg.RegistryAddresses,
-	)
-
-	select {
-	case <-signalCtx.Done():
-	case err := <-serveErrs:
-		return fmt.Errorf("observability server failed: %w", err)
+	if err := application.Start(ctx); err != nil {
+		return fmt.Errorf("start load balancer application: %w", err)
 	}
 
-	logger.Info("Load Balancer process stopping")
+	return nil
+}
 
-	observabilityServer.SetReady(false)
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+func shutdown(application *app.App) error {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	if err := observabilityServer.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("shutdown observability server: %w", err)
-	}
-
-	logger.Info("Load Balancer process stopped")
-	return nil
+	return application.Shutdown(ctx)
 }
