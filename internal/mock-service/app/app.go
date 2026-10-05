@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"tpiii.local/daniel-tpiii/internal/metrics"
 	"tpiii.local/daniel-tpiii/internal/mock-service/http"
 	"tpiii.local/daniel-tpiii/internal/mock-service/registry"
@@ -119,7 +122,10 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 	errs := make([]error, 4)
 
-	if err := a.registryClient.Deregister(ctx, a.instance); err != nil {
+	err := a.registryClient.Deregister(ctx, a.instance)
+	switch status.Code(err) {
+	case codes.OK, codes.NotFound, codes.FailedPrecondition:
+	default:
 		errs[0] = fmt.Errorf("deregister service instance: %w", err)
 	}
 

@@ -93,6 +93,14 @@ func (h *HealthManager) renewTTL(id ServiceInstanceID, ttl time.Duration) {
 	h.notifyScheduler()
 }
 
+func (h *HealthManager) removeTTL(id ServiceInstanceID) {
+	h.mu.Lock()
+	delete(h.deadlines, id)
+	h.mu.Unlock()
+
+	h.notifyScheduler()
+}
+
 func (h *HealthManager) notifyScheduler() {
 	select {
 	case h.wakeUp <- struct{}{}:
@@ -179,6 +187,11 @@ func (h *HealthManager) sendError(ctx context.Context, err error) {
 }
 
 func (h *HealthManager) onStateChange(change StateChange) {
+	if change.Type == StateChangeDeleted {
+		h.removeTTL(change.Instance.ID)
+		return
+	}
+
 	if change.Type != StateChangeExpired || !h.hasValidTTL(change.Instance.ID) {
 		return
 	}

@@ -10,6 +10,8 @@ import (
 	"tpiii.local/daniel-tpiii/internal/metrics"
 	"tpiii.local/daniel-tpiii/internal/observability"
 	"tpiii.local/daniel-tpiii/internal/registry"
+	"tpiii.local/daniel-tpiii/internal/registry/ap"
+	"tpiii.local/daniel-tpiii/internal/registry/cp"
 	"tpiii.local/daniel-tpiii/internal/registry/grpc"
 )
 
@@ -116,11 +118,9 @@ func (a *App) Shutdown(ctx context.Context) error {
 func newBackend(params Params) (registry.Backend, error) {
 	switch params.Backend {
 	case "cp":
-		// TODO: Implement CP backend
-		return nil, nil
+		return cp.NewBackend(), nil
 	case "ap":
-		// TODO: Implement AP backend
-		return nil, nil
+		return ap.NewBackend(), nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
 	}
