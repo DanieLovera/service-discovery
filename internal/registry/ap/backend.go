@@ -15,6 +15,14 @@ func NewBackend() *Backend {
 	return &Backend{}
 }
 
+func (b *Backend) Start(ctx context.Context) error {
+	return nil
+}
+
+func (b *Backend) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 func (b *Backend) Register(ctx context.Context, params registry.RegisterParams) error {
 	return nil
 }

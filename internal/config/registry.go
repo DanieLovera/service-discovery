@@ -9,7 +9,10 @@ import (
 	"tpiii.local/daniel-tpiii/internal/logging"
 )
 
-const defaultTTLMultiplier = 3
+const (
+	defaultTTLMultiplier = 3
+	defaultRaftDataDir   = "/data/raft"
+)
 
 type Registry struct {
 	NodeID               string
@@ -18,6 +21,9 @@ type Registry struct {
 	ObservabilityAddress string
 	ClusterMembers       []string
 	TTLMultiplier        int
+	RaftBindAddress      string
+	RaftAdvertiseAddress string
+	RaftDataDir          string
 	Log                  logging.Config
 }
 
@@ -34,6 +40,9 @@ func LoadRegistry() (Registry, error) {
 		ObservabilityAddress: stringFromEnvOrDefault("OBSERVABILITY_ADDRESS", defaultRegistryObservabilityAddress),
 		ClusterMembers:       splitCSV(os.Getenv("CLUSTER_MEMBERS")),
 		TTLMultiplier:        ttlMultiplier,
+		RaftBindAddress:      stringFromEnvOrDefault("RAFT_BIND_ADDRESS", defaultRegistryRaftAddress),
+		RaftAdvertiseAddress: strings.TrimSpace(os.Getenv("RAFT_ADVERTISE_ADDRESS")),
+		RaftDataDir:          stringFromEnvOrDefault("RAFT_DATA_DIR", defaultRaftDataDir),
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("LOG_FORMAT", "json"),
@@ -51,6 +60,9 @@ func LoadRegistry() (Registry, error) {
 	}
 	if cfg.TTLMultiplier <= 0 {
 		errs = append(errs, errors.New("HEARTBEAT_TTL_MULTIPLIER must be greater than zero"))
+	}
+	if cfg.Backend == "cp" && cfg.RaftAdvertiseAddress == "" {
+		errs = append(errs, errors.New("RAFT_ADVERTISE_ADDRESS is required for the cp backend"))
 	}
 	return cfg, errors.Join(errs...)
 }

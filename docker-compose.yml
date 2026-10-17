@@ -7,14 +7,19 @@ services:
         SERVICE: registry
     environment:
       INSTANCE_ID: registry-1
-      BACKEND: ap
+      BACKEND: cp
       CLUSTER_MEMBERS: registry:7000
       GRPC_ADDRESS: 0.0.0.0:7000
       OBSERVABILITY_ADDRESS: 0.0.0.0:10000
       HEARTBEAT_TTL_MULTIPLIER: 3
+      RAFT_BIND_ADDRESS: 0.0.0.0:7001
+      RAFT_ADVERTISE_ADDRESS: registry:7001
+      RAFT_DATA_DIR: /data/raft
     ports:
       - "7000:7000"
       - "10000:10000"
+    volumes:
+      - registry-data:/data
 
   load-balancer:
     image: daanilo/load-balancer:dev
@@ -84,3 +89,6 @@ services:
       - registry
       - load-balancer
       - mock-service
+
+volumes:
+  registry-data:

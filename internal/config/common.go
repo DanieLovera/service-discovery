@@ -7,6 +7,7 @@ import (
 
 const (
 	defaultRegistryGRPCAddress          = "0.0.0.0:7000"
+	defaultRegistryRaftAddress          = "0.0.0.0:7001"
 	defaultLBHTTPAddress                = "0.0.0.0:8000"
 	defaultMockHTTPAddress              = "0.0.0.0:9000"
 	defaultRegistryObservabilityAddress = "0.0.0.0:10000"
