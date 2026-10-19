@@ -1,6 +1,22 @@
+x-registry-environment: &registry-environment
+  BACKEND: cp
+  CLUSTER_MEMBERS: registry-1=registry-1:7000|registry-1:7001,registry-2=registry-2:7000|registry-2:7001,registry-3=registry-3:7000|registry-3:7001
+  GRPC_ADDRESS: 0.0.0.0:7000
+  OBSERVABILITY_ADDRESS: 0.0.0.0:10000
+  HEARTBEAT_TTL_MULTIPLIER: 3
+  RAFT_BIND_ADDRESS: 0.0.0.0:7001
+  RAFT_DATA_DIR: /data/raft
+
+x-registry: &registry
+  image: daanilo/registry:dev
+  build:
+    context: .
+    args:
+      SERVICE: registry
+
 x-mock-service-environment: &mock-service-environment
   NAME: mock-service
-  REGISTRY_ADDRESSES: registry:7000
+  REGISTRY_ADDRESSES: registry-1:7000,registry-2:7000,registry-3:7000
   HTTP_ADDRESS: 0.0.0.0:9000
   OBSERVABILITY_ADDRESS: 0.0.0.0:10020
   WEIGHT: 1
@@ -13,30 +29,34 @@ x-mock-service: &mock-service
     args:
       SERVICE: mock-service
   depends_on:
-    - registry
+    - registry-1
+    - registry-2
+    - registry-3
 
 services:
-  registry:
-    image: daanilo/registry:dev
-    build:
-      context: .
-      args:
-        SERVICE: registry
+  registry-1:
+    <<: *registry
     environment:
+      <<: *registry-environment
       INSTANCE_ID: registry-1
-      BACKEND: cp
-      CLUSTER_MEMBERS: registry:7000
-      GRPC_ADDRESS: 0.0.0.0:7000
-      OBSERVABILITY_ADDRESS: 0.0.0.0:10000
-      HEARTBEAT_TTL_MULTIPLIER: 3
-      RAFT_BIND_ADDRESS: 0.0.0.0:7001
-      RAFT_ADVERTISE_ADDRESS: registry:7001
-      RAFT_DATA_DIR: /data/raft
-    ports:
-      - "7000:7000"
-      - "10000:10000"
     volumes:
-      - registry-data:/data
+      - registry-1-data:/data
+
+  registry-2:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-2
+    volumes:
+      - registry-2-data:/data
+
+  registry-3:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-3
+    volumes:
+      - registry-3-data:/data
 
   load-balancer:
     image: daanilo/load-balancer:dev
@@ -45,7 +65,7 @@ services:
       args:
         SERVICE: load-balancer
     environment:
-      REGISTRY_ADDRESSES: registry:7000
+      REGISTRY_ADDRESSES: registry-1:7000,registry-2:7000,registry-3:7000
       SERVICES: mock-service:round-robin
       HTTP_ADDRESS: 0.0.0.0:8000
       OBSERVABILITY_ADDRESS: 0.0.0.0:10010
@@ -56,7 +76,9 @@ services:
       - "8000:8000"
       - "10010:10010"
     depends_on:
-      - registry
+      - registry-1
+      - registry-2
+      - registry-3
 
   mock-service-1:
     <<: *mock-service
@@ -103,11 +125,15 @@ services:
     ports:
       - "8083:9090"
     depends_on:
-      - registry
+      - registry-1
+      - registry-2
+      - registry-3
       - load-balancer
       - mock-service-1
       - mock-service-2
       - mock-service-3
 
 volumes:
-  registry-data:
+  registry-1-data:
+  registry-2-data:
+  registry-3-data:

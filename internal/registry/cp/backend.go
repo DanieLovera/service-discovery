@@ -28,10 +28,10 @@ const (
 var _ registry.Backend = (*Backend)(nil)
 
 type Config struct {
-	NodeID           string
-	BindAddress      string
-	AdvertiseAddress string
-	DataDir          string
+	NodeID      string
+	BindAddress string
+	DataDir     string
+	Members     []registry.ClusterMember
 }
 
 type Backend struct {
@@ -50,6 +50,11 @@ func NewBackend(config Config) *Backend {
 }
 
 func (b *Backend) Start(ctx context.Context) error {
+	self, ok := b.member(b.config.NodeID)
+	if !ok {
+		return fmt.Errorf("node %q is not a cluster member", b.config.NodeID)
+	}
+
 	if err := os.MkdirAll(b.config.DataDir, 0o750); err != nil {
 		return fmt.Errorf("create raft data dir: %w", err)
 	}
@@ -65,7 +70,7 @@ func (b *Backend) Start(ctx context.Context) error {
 		return fmt.Errorf("open raft snapshot store: %w", err)
 	}
 
-	advertise, err := net.ResolveTCPAddr("tcp", b.config.AdvertiseAddress)
+	advertise, err := net.ResolveTCPAddr("tcp", self.RaftAddress)
 	if err != nil {
 		_ = boltStore.Close()
 		return fmt.Errorf("resolve raft advertise address: %w", err)
@@ -103,11 +108,7 @@ func (b *Backend) Start(ctx context.Context) error {
 	b.boltStore = boltStore
 
 	if !hasState {
-		bootstrap := raft.Configuration{
-			Servers: []raft.Server{{ID: raftConfig.LocalID, Address: transport.LocalAddr()}},
-		}
-
-		if err := node.BootstrapCluster(bootstrap).Error(); err != nil {
+		if err := node.BootstrapCluster(b.clusterConfiguration()).Error(); err != nil {
 			return fmt.Errorf("bootstrap raft cluster: %w", err)
 		}
 	}
@@ -117,6 +118,28 @@ func (b *Backend) Start(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (b *Backend) clusterConfiguration() raft.Configuration {
+	servers := make([]raft.Server, 0, len(b.config.Members))
+	for _, member := range b.config.Members {
+		servers = append(servers, raft.Server{
+			ID:      raft.ServerID(member.ID),
+			Address: raft.ServerAddress(member.RaftAddress),
+		})
+	}
+
+	return raft.Configuration{Servers: servers}
+}
+
+func (b *Backend) member(id string) (registry.ClusterMember, bool) {
+	for _, member := range b.config.Members {
+		if member.ID == id {
+			return member, true
+		}
+	}
+
+	return registry.ClusterMember{}, false
 }
 
 func (b *Backend) waitForLeader(ctx context.Context) error {

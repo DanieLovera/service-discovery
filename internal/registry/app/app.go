@@ -20,10 +20,9 @@ type Params struct {
 	Backend              string
 	GRPCAddress          string
 	ObservabilityAddress string
-	ClusterMembers       []string
+	ClusterMembers       []registry.ClusterMember
 	TTLMultiplier        int
 	RaftBindAddress      string
-	RaftAdvertiseAddress string
 	RaftDataDir          string
 	Logger               *slog.Logger
 }
@@ -132,10 +131,10 @@ func newBackend(params Params) (registry.Backend, error) {
 	switch params.Backend {
 	case "cp":
 		return cp.NewBackend(cp.Config{
-			NodeID:           params.NodeID,
-			BindAddress:      params.RaftBindAddress,
-			AdvertiseAddress: params.RaftAdvertiseAddress,
-			DataDir:          params.RaftDataDir,
+			NodeID:      params.NodeID,
+			BindAddress: params.RaftBindAddress,
+			DataDir:     params.RaftDataDir,
+			Members:     params.ClusterMembers,
 		}), nil
 	case "ap":
 		return ap.NewBackend(), nil

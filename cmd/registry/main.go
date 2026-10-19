@@ -45,7 +45,6 @@ func start() (err error) {
 		ClusterMembers:       cfg.ClusterMembers,
 		TTLMultiplier:        cfg.TTLMultiplier,
 		RaftBindAddress:      cfg.RaftBindAddress,
-		RaftAdvertiseAddress: cfg.RaftAdvertiseAddress,
 		RaftDataDir:          cfg.RaftDataDir,
 		Logger:               logger,
 	})
