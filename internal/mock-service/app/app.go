@@ -94,7 +94,7 @@ func (a *App) Start(ctx context.Context) error {
 		return fmt.Errorf("serve HTTP server: %w", err)
 	}
 
-	if err := a.registryClient.Register(ctx, a.instance); err != nil {
+	if err := a.register(ctx); err != nil {
 		return fmt.Errorf("register service instance: %w", err)
 	}
 
@@ -150,6 +150,27 @@ func (a *App) Shutdown(ctx context.Context) error {
 	}
 
 	return errors.Join(errs...)
+}
+
+func (a *App) register(ctx context.Context) error {
+	for {
+		err := a.registryClient.Register(ctx, a.instance)
+		if status.Code(err) == codes.AlreadyExists {
+			err = a.registryClient.Update(ctx, a.instance)
+		}
+
+		if err == nil || !errors.Is(err, registry.ErrUnavailable) {
+			return err
+		}
+
+		a.logger.Warn("Registry unavailable, retrying register", "error", err)
+
+		select {
+		case <-time.After(a.instance.HeartbeatInterval):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 func (a *App) runHeartbeats(ctx context.Context) {

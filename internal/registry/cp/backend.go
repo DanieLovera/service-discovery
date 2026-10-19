@@ -49,8 +49,6 @@ func NewBackend(config Config) *Backend {
 	}
 }
 
-// Lifecycle
-
 func (b *Backend) Start(ctx context.Context) error {
 	if err := os.MkdirAll(b.config.DataDir, 0o750); err != nil {
 		return fmt.Errorf("create raft data dir: %w", err)
@@ -164,8 +162,6 @@ func (b *Backend) Shutdown(ctx context.Context) error {
 	return errors.Join(err, b.boltStore.Close())
 }
 
-// Domain operations
-
 func (b *Backend) Register(ctx context.Context, params registry.RegisterParams) error {
 	return b.apply(ctx, newRegisterCommand(params))
 }
@@ -197,8 +193,6 @@ func (b *Backend) Lookup(ctx context.Context, id registry.ServiceInstanceID) ([]
 func (b *Backend) RegisterStateChangeHandler(handler registry.StateChangeHandler) {
 	b.store.RegisterStateChangeHandler(handler)
 }
-
-// Raft helpers
 
 func (b *Backend) apply(ctx context.Context, cmd command) error {
 	data, err := json.Marshal(cmd)

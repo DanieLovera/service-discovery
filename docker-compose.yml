@@ -1,3 +1,20 @@
+x-mock-service-environment: &mock-service-environment
+  NAME: mock-service
+  REGISTRY_ADDRESSES: registry:7000
+  HTTP_ADDRESS: 0.0.0.0:9000
+  OBSERVABILITY_ADDRESS: 0.0.0.0:10020
+  WEIGHT: 1
+  HEARTBEAT_INTERVAL: 5s
+
+x-mock-service: &mock-service
+  image: daanilo/mock-service:dev
+  build:
+    context: .
+    args:
+      SERVICE: mock-service
+  depends_on:
+    - registry
+
 services:
   registry:
     image: daanilo/registry:dev
@@ -41,26 +58,26 @@ services:
     depends_on:
       - registry
 
-  mock-service:
-    image: daanilo/mock-service:dev
-    build:
-      context: .
-      args:
-        SERVICE: mock-service
+  mock-service-1:
+    <<: *mock-service
     environment:
-      NAME: mock-service
+      <<: *mock-service-environment
       INSTANCE_ID: mock-service-1
-      REGISTRY_ADDRESSES: registry:7000
-      ADVERTISE_ADDRESS: mock-service:9000
-      HTTP_ADDRESS: 0.0.0.0:9000
-      OBSERVABILITY_ADDRESS: 0.0.0.0:10020
-      WEIGHT: 1
-      HEARTBEAT_INTERVAL: 5s
-    ports:
-      - "9000:9000"
-      - "10020:10020"
-    depends_on:
-      - registry
+      ADVERTISE_ADDRESS: mock-service-1:9000
+
+  mock-service-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      INSTANCE_ID: mock-service-2
+      ADVERTISE_ADDRESS: mock-service-2:9000
+
+  mock-service-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      INSTANCE_ID: mock-service-3
+      ADVERTISE_ADDRESS: mock-service-3:9000
 
   dozzle:
     image: amir20/dozzle:latest
@@ -88,7 +105,9 @@ services:
     depends_on:
       - registry
       - load-balancer
-      - mock-service
+      - mock-service-1
+      - mock-service-2
+      - mock-service-3
 
 volumes:
   registry-data:

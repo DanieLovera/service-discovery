@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var ErrUnavailable = errors.New("all registry nodes unavailable")
+
 type Instance struct {
 	ServiceName       string
 	InstanceID        string
@@ -55,6 +57,19 @@ func NewClient(addresses []string, requestTimeout time.Duration) (*Client, error
 func (c *Client) Register(ctx context.Context, instance Instance) error {
 	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
 		_, err := client.Register(ctx, &registrypb.RegisterRequest{
+			ServiceName:         instance.ServiceName,
+			InstanceId:          instance.InstanceID,
+			Address:             instance.Address,
+			Weight:              int32(instance.Weight),
+			HeartbeatIntervalMs: instance.HeartbeatInterval.Milliseconds(),
+		})
+		return err
+	})
+}
+
+func (c *Client) Update(ctx context.Context, instance Instance) error {
+	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
+		_, err := client.Update(ctx, &registrypb.UpdateRequest{
 			ServiceName:         instance.ServiceName,
 			InstanceId:          instance.InstanceID,
 			Address:             instance.Address,
@@ -128,7 +143,7 @@ func (c *Client) execute(
 		errs = append(errs, err)
 	}
 
-	return fmt.Errorf("all registry nodes unavailable: %w", errors.Join(errs...))
+	return fmt.Errorf("%w: %w", ErrUnavailable, errors.Join(errs...))
 }
 
 func isRetryable(err error) bool {
