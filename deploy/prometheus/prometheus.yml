@@ -8,6 +8,8 @@ scrape_configs:
           - registry-1:10000
           - registry-2:10000
           - registry-3:10000
+          - registry-4:10000
+          - registry-5:10000
 
   - job_name: load-balancer
     static_configs:

@@ -1,6 +1,15 @@
+x-registry-addresses: &registry-addresses registry-1:7000,registry-2:7000,registry-3:7000,registry-4:7000,registry-5:7000
+
+x-registry-dependencies: &registry-dependencies
+  - registry-1
+  - registry-2
+  - registry-3
+  - registry-4
+  - registry-5
+
 x-registry-environment: &registry-environment
   BACKEND: cp
-  CLUSTER_MEMBERS: registry-1=registry-1:7000|registry-1:7001,registry-2=registry-2:7000|registry-2:7001,registry-3=registry-3:7000|registry-3:7001
+  CLUSTER_MEMBERS: registry-1=registry-1:7000|registry-1:7001,registry-2=registry-2:7000|registry-2:7001,registry-3=registry-3:7000|registry-3:7001,registry-4=registry-4:7000|registry-4:7001,registry-5=registry-5:7000|registry-5:7001
   GRPC_ADDRESS: 0.0.0.0:7000
   OBSERVABILITY_ADDRESS: 0.0.0.0:10000
   HEARTBEAT_TTL_MULTIPLIER: 3
@@ -18,7 +27,7 @@ x-registry: &registry
 
 x-mock-service-environment: &mock-service-environment
   NAME: mock-service
-  REGISTRY_ADDRESSES: registry-1:7000,registry-2:7000,registry-3:7000
+  REGISTRY_ADDRESSES: *registry-addresses
   HTTP_ADDRESS: 0.0.0.0:9000
   OBSERVABILITY_ADDRESS: 0.0.0.0:10020
   WEIGHT: 1
@@ -30,10 +39,7 @@ x-mock-service: &mock-service
     context: .
     args:
       SERVICE: mock-service
-  depends_on:
-    - registry-1
-    - registry-2
-    - registry-3
+  depends_on: *registry-dependencies
 
 services:
   registry-1:
@@ -60,6 +66,22 @@ services:
     volumes:
       - registry-3-data:/data
 
+  registry-4:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-4
+    volumes:
+      - registry-4-data:/data
+
+  registry-5:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-5
+    volumes:
+      - registry-5-data:/data
+
   load-balancer:
     image: daanilo/load-balancer:dev
     build:
@@ -67,7 +89,7 @@ services:
       args:
         SERVICE: load-balancer
     environment:
-      REGISTRY_ADDRESSES: registry-1:7000,registry-2:7000,registry-3:7000
+      REGISTRY_ADDRESSES: *registry-addresses
       SERVICES: mock-service:round-robin
       HTTP_ADDRESS: 0.0.0.0:8000
       OBSERVABILITY_ADDRESS: 0.0.0.0:10010
@@ -77,10 +99,7 @@ services:
     ports:
       - "8000:8000"
       - "10010:10010"
-    depends_on:
-      - registry-1
-      - registry-2
-      - registry-3
+    depends_on: *registry-dependencies
 
   mock-service-1:
     <<: *mock-service
@@ -127,9 +146,6 @@ services:
     ports:
       - "8083:9090"
     depends_on:
-      - registry-1
-      - registry-2
-      - registry-3
       - load-balancer
       - mock-service-1
       - mock-service-2
@@ -139,3 +155,5 @@ volumes:
   registry-1-data:
   registry-2-data:
   registry-3-data:
+  registry-4-data:
+  registry-5-data:
