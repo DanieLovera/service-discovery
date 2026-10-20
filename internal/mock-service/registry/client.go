@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"slices"
@@ -68,14 +69,17 @@ func (c *Client) Register(ctx context.Context, instance Instance) error {
 }
 
 func (c *Client) Update(ctx context.Context, instance Instance) error {
+	request := &registrypb.UpdateRequest{
+		ServiceName:         instance.ServiceName,
+		InstanceId:          instance.InstanceID,
+		Address:             instance.Address,
+		Weight:              int32(instance.Weight),
+		HeartbeatIntervalMs: instance.HeartbeatInterval.Milliseconds(),
+		RequestId:           rand.Text(),
+	}
+
 	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
-		_, err := client.Update(ctx, &registrypb.UpdateRequest{
-			ServiceName:         instance.ServiceName,
-			InstanceId:          instance.InstanceID,
-			Address:             instance.Address,
-			Weight:              int32(instance.Weight),
-			HeartbeatIntervalMs: instance.HeartbeatInterval.Milliseconds(),
-		})
+		_, err := client.Update(ctx, request)
 		return err
 	})
 }

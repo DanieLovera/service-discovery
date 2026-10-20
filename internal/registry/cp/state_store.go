@@ -9,14 +9,16 @@ import (
 )
 
 type stateStore struct {
-	mu        sync.RWMutex
-	instances map[registry.ServiceInstanceID]registry.ServiceInstance
-	handlers  []registry.StateChangeHandler
+	mu                sync.RWMutex
+	instances         map[registry.ServiceInstanceID]registry.ServiceInstance
+	processedRequests map[string]string
+	handlers          []registry.StateChangeHandler
 }
 
 func newStateStore() *stateStore {
 	return &stateStore{
-		instances: make(map[registry.ServiceInstanceID]registry.ServiceInstance),
+		instances:         make(map[registry.ServiceInstanceID]registry.ServiceInstance),
+		processedRequests: make(map[string]string),
 	}
 }
 
@@ -129,6 +131,21 @@ func (s *stateStore) RegisterStateChangeHandler(handler registry.StateChangeHand
 	s.handlers = append(s.handlers, handler)
 }
 
+func (s *stateStore) RequestResult(requestID string) (string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result, ok := s.processedRequests[requestID]
+	return result, ok
+}
+
+func (s *stateStore) RecordRequest(requestID, result string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.processedRequests[requestID] = result
+}
+
 func (s *stateStore) Instances() []registry.ServiceInstance {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -136,16 +153,28 @@ func (s *stateStore) Instances() []registry.ServiceInstance {
 	return slices.Collect(maps.Values(s.instances))
 }
 
-func (s *stateStore) Replace(instances []registry.ServiceInstance) {
+func (s *stateStore) ProcessedRequests() map[string]string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return maps.Clone(s.processedRequests)
+}
+
+func (s *stateStore) Replace(instances []registry.ServiceInstance, processedRequests map[string]string) {
 	restored := make(map[registry.ServiceInstanceID]registry.ServiceInstance, len(instances))
 	for _, instance := range instances {
 		restored[instance.ID] = instance
+	}
+
+	if processedRequests == nil {
+		processedRequests = make(map[string]string)
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.instances = restored
+	s.processedRequests = processedRequests
 	s.notify(registry.StateChange{Type: registry.StateChangeRestored, Instances: instances})
 }
 

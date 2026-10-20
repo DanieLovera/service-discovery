@@ -250,6 +250,7 @@ type UpdateRequest struct {
 	Address             string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 	Weight              int32                  `protobuf:"varint,4,opt,name=weight,proto3" json:"weight,omitempty"`
 	HeartbeatIntervalMs int64                  `protobuf:"varint,5,opt,name=heartbeat_interval_ms,json=heartbeatIntervalMs,proto3" json:"heartbeat_interval_ms,omitempty"`
+	RequestId           string                 `protobuf:"bytes,6,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -317,6 +318,13 @@ func (x *UpdateRequest) GetHeartbeatIntervalMs() int64 {
 		return x.HeartbeatIntervalMs
 	}
 	return 0
+}
+
+func (x *UpdateRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
 }
 
 type UpdateResponse struct {
@@ -945,14 +953,16 @@ const file_proto_registry_proto_rawDesc = "" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x16\n" +
 	"\x06weight\x18\x04 \x01(\x05R\x06weight\x122\n" +
 	"\x15heartbeat_interval_ms\x18\x05 \x01(\x03R\x13heartbeatIntervalMs\"\x12\n" +
-	"\x10RegisterResponse\"\xb9\x01\n" +
+	"\x10RegisterResponse\"\xd8\x01\n" +
 	"\rUpdateRequest\x12!\n" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1f\n" +
 	"\vinstance_id\x18\x02 \x01(\tR\n" +
 	"instanceId\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x16\n" +
 	"\x06weight\x18\x04 \x01(\x05R\x06weight\x122\n" +
-	"\x15heartbeat_interval_ms\x18\x05 \x01(\x03R\x13heartbeatIntervalMs\"\x10\n" +
+	"\x15heartbeat_interval_ms\x18\x05 \x01(\x03R\x13heartbeatIntervalMs\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x06 \x01(\tR\trequestId\"\x10\n" +
 	"\x0eUpdateResponse\"W\n" +
 	"\x11DeregisterRequest\x12!\n" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1f\n" +

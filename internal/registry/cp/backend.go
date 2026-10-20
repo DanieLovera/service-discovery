@@ -2,6 +2,7 @@ package cp
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -202,6 +203,10 @@ func (b *Backend) Register(ctx context.Context, params registry.RegisterParams) 
 }
 
 func (b *Backend) Update(ctx context.Context, params registry.UpdateParams) error {
+	if params.RequestID == "" {
+		params.RequestID = rand.Text()
+	}
+
 	return b.apply(ctx, newUpdateCommand(params))
 }
 
@@ -210,11 +215,11 @@ func (b *Backend) Deregister(ctx context.Context, id registry.ServiceInstanceID)
 }
 
 func (b *Backend) Expire(ctx context.Context, id registry.ServiceInstanceID) error {
-	return b.apply(ctx, newInstanceCommand(commandExpire, id))
+	return b.apply(ctx, newInstanceCommand(commandExpire, id).withRequestID(rand.Text()))
 }
 
 func (b *Backend) Recover(ctx context.Context, id registry.ServiceInstanceID) error {
-	return b.apply(ctx, newInstanceCommand(commandRecover, id))
+	return b.apply(ctx, newInstanceCommand(commandRecover, id).withRequestID(rand.Text()))
 }
 
 func (b *Backend) Lookup(ctx context.Context, id registry.ServiceInstanceID) ([]registry.ServiceInstance, error) {

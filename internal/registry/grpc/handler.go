@@ -57,6 +57,7 @@ func (h *Handler) Update(ctx context.Context, req *registrypb.UpdateRequest) (*r
 		Address:           req.GetAddress(),
 		Weight:            int(req.GetWeight()),
 		HeartbeatInterval: time.Duration(req.GetHeartbeatIntervalMs()) * time.Millisecond,
+		RequestID:         req.GetRequestId(),
 	})
 	if err != nil {
 		return nil, grpcError(err)

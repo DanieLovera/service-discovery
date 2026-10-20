@@ -23,6 +23,7 @@ type command struct {
 	Address             string      `json:"address,omitempty"`
 	Weight              int         `json:"weight,omitempty"`
 	HeartbeatIntervalMs int64       `json:"heartbeat_interval_ms,omitempty"`
+	RequestID           string      `json:"request_id,omitempty"`
 }
 
 func newRegisterCommand(params registry.RegisterParams) command {
@@ -44,6 +45,7 @@ func newUpdateCommand(params registry.UpdateParams) command {
 		Address:             params.Address,
 		Weight:              params.Weight,
 		HeartbeatIntervalMs: params.HeartbeatInterval.Milliseconds(),
+		RequestID:           params.RequestID,
 	}
 }
 
@@ -53,6 +55,11 @@ func newInstanceCommand(commandType commandType, id registry.ServiceInstanceID) 
 		ServiceName: id.ServiceName,
 		InstanceID:  id.InstanceID,
 	}
+}
+
+func (c command) withRequestID(requestID string) command {
+	c.RequestID = requestID
+	return c
 }
 
 func (c command) registerParams() registry.RegisterParams {

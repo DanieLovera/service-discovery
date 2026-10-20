@@ -17,6 +17,7 @@ type UpdateParams struct {
 	Address           string
 	Weight            int
 	HeartbeatInterval time.Duration
+	RequestID         string
 }
 
 type RegistryManager struct {

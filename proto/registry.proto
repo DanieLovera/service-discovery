@@ -29,6 +29,7 @@ message UpdateRequest {
   string address = 3;
   int32 weight = 4;
   int64 heartbeat_interval_ms = 5;
+  string request_id = 6;
 }
 
 message UpdateResponse {}
