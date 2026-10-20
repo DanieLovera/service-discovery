@@ -111,9 +111,12 @@ func (m *Manager) syncPool(ctx context.Context, serviceName string, servicePool 
 			return err
 		}
 
-		if event.Healthy {
+		switch {
+		case event.IsSnapshot:
+			servicePool.Replace(event.Snapshot)
+		case event.Healthy:
 			servicePool.Upsert(event.Instance)
-		} else {
+		default:
 			servicePool.Remove(event.Instance.ID)
 		}
 	}

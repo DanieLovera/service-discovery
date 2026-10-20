@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"slices"
@@ -15,6 +16,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
+
+var ErrUnavailable = errors.New("all registry nodes unavailable")
 
 type Instance struct {
 	ServiceName       string
@@ -61,6 +64,22 @@ func (c *Client) Register(ctx context.Context, instance Instance) error {
 			Weight:              int32(instance.Weight),
 			HeartbeatIntervalMs: instance.HeartbeatInterval.Milliseconds(),
 		})
+		return err
+	})
+}
+
+func (c *Client) Update(ctx context.Context, instance Instance) error {
+	request := &registrypb.UpdateRequest{
+		ServiceName:         instance.ServiceName,
+		InstanceId:          instance.InstanceID,
+		Address:             instance.Address,
+		Weight:              int32(instance.Weight),
+		HeartbeatIntervalMs: instance.HeartbeatInterval.Milliseconds(),
+		RequestId:           rand.Text(),
+	}
+
+	return c.execute(ctx, func(ctx context.Context, client registrypb.RegistryClient) error {
+		_, err := client.Update(ctx, request)
 		return err
 	})
 }
@@ -128,7 +147,7 @@ func (c *Client) execute(
 		errs = append(errs, err)
 	}
 
-	return fmt.Errorf("all registry nodes unavailable: %w", errors.Join(errs...))
+	return fmt.Errorf("%w: %w", ErrUnavailable, errors.Join(errs...))
 }
 
 func isRetryable(err error) bool {

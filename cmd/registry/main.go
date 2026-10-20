@@ -44,6 +44,10 @@ func start() (err error) {
 		ObservabilityAddress: cfg.ObservabilityAddress,
 		ClusterMembers:       cfg.ClusterMembers,
 		TTLMultiplier:        cfg.TTLMultiplier,
+		RaftBindAddress:      cfg.RaftBindAddress,
+		RaftDataDir:          cfg.RaftDataDir,
+		ForwardTimeout:       cfg.ForwardTimeout,
+		ForwardMaxAttempts:   cfg.ForwardMaxAttempts,
 		Logger:               logger,
 	})
 	if err != nil {

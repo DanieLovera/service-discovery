@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
+
+	googlegrpc "google.golang.org/grpc"
 
 	"tpiii.local/daniel-tpiii/internal/metrics"
 	"tpiii.local/daniel-tpiii/internal/observability"
@@ -20,12 +23,21 @@ type Params struct {
 	Backend              string
 	GRPCAddress          string
 	ObservabilityAddress string
-	ClusterMembers       []string
+	ClusterMembers       []registry.ClusterMember
 	TTLMultiplier        int
+	RaftBindAddress      string
+	RaftDataDir          string
+	ForwardTimeout       time.Duration
+	ForwardMaxAttempts   int
 	Logger               *slog.Logger
 }
 
+type grpcRegistrar interface {
+	RegisterGRPC(registrar googlegrpc.ServiceRegistrar)
+}
+
 type App struct {
+	backend             registry.Backend
 	healthManager       *registry.HealthManager
 	grpcServer          *grpc.Server
 	observabilityServer *observability.Server
@@ -42,7 +54,12 @@ func New(params Params) (*App, error) {
 	healthManager := registry.NewHealthManager(backend, params.TTLMultiplier, params.Logger)
 	watchManager := registry.NewWatchManager(backend)
 	grpcHandler := grpc.NewHandler(registryManager, healthManager, watchManager)
-	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger)
+	var registrations []func(googlegrpc.ServiceRegistrar)
+	if registrar, ok := backend.(grpcRegistrar); ok {
+		registrations = append(registrations, registrar.RegisterGRPC)
+	}
+
+	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger, registrations...)
 
 	processMetrics := metrics.New("registry", params.NodeID)
 	metricsHandler := processMetrics.Handler()
@@ -54,6 +71,7 @@ func New(params Params) (*App, error) {
 
 	return &App{
 		logger:              params.Logger,
+		backend:             backend,
 		healthManager:       healthManager,
 		grpcServer:          grpcServer,
 		observabilityServer: observabilityServer,
@@ -67,6 +85,10 @@ func (a *App) Start(ctx context.Context) error {
 	observabilityErrs, err := a.observabilityServer.Serve()
 	if err != nil {
 		return fmt.Errorf("serve observability server: %w", err)
+	}
+
+	if err := a.backend.Start(ctx); err != nil {
+		return fmt.Errorf("start registry backend: %w", err)
 	}
 
 	grpcErrs, err := a.grpcServer.Serve()
@@ -95,7 +117,7 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 	a.observabilityServer.SetReady(false)
 
-	errs := make([]error, 2)
+	errs := make([]error, 3)
 
 	var wg sync.WaitGroup
 	wg.Go(func() {
@@ -112,13 +134,24 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 	wg.Wait()
 
+	if err := a.backend.Shutdown(ctx); err != nil {
+		errs[2] = fmt.Errorf("shutdown registry backend: %w", err)
+	}
+
 	return errors.Join(errs...)
 }
 
 func newBackend(params Params) (registry.Backend, error) {
 	switch params.Backend {
 	case "cp":
-		return cp.NewBackend(), nil
+		return cp.NewBackend(cp.Config{
+			NodeID:             params.NodeID,
+			BindAddress:        params.RaftBindAddress,
+			DataDir:            params.RaftDataDir,
+			Members:            params.ClusterMembers,
+			ForwardTimeout:     params.ForwardTimeout,
+			ForwardMaxAttempts: params.ForwardMaxAttempts,
+		}), nil
 	case "ap":
 		return ap.NewBackend(), nil
 	default:

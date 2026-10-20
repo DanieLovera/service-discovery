@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_VERSION=1.25
+ARG GO_VERSION=1.26
 
 FROM golang:${GO_VERSION}-alpine AS build
 WORKDIR /src
@@ -12,7 +12,8 @@ RUN test -n "${SERVICE}" && \
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/${SERVICE}"
 
 FROM alpine:3.20
-RUN addgroup -S app && adduser -S -G app -u 10001 app
+RUN addgroup -S app && adduser -S -G app -u 10001 app && \
+    mkdir -p /data && chown app:app /data
 USER app:app
 COPY --from=build /out/service /usr/local/bin/service
 ENTRYPOINT ["/usr/local/bin/service"]

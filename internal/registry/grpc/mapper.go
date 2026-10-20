@@ -86,6 +86,8 @@ func grpcError(err error) error {
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, registry.ErrServiceInstanceDeleted):
 		return status.Error(codes.FailedPrecondition, err.Error())
+	case errors.Is(err, registry.ErrNotLeader), errors.Is(err, registry.ErrUnavailable):
+		return status.Error(codes.Unavailable, err.Error())
 	default:
 		return status.Error(codes.Internal, err.Error())
 	}

@@ -8,9 +8,11 @@ const (
 	StateChangeHealthy    StateChangeType = "HEALTHY"
 	StateChangeExpired    StateChangeType = "EXPIRED"
 	StateChangeDeleted    StateChangeType = "DELETED"
+	StateChangeRestored   StateChangeType = "RESTORED"
 )
 
 type StateChange struct {
-	Type     StateChangeType
-	Instance ServiceInstance
+	Type      StateChangeType
+	Instance  ServiceInstance
+	Instances []ServiceInstance
 }

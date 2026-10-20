@@ -57,6 +57,7 @@ func (h *Handler) Update(ctx context.Context, req *registrypb.UpdateRequest) (*r
 		Address:           req.GetAddress(),
 		Weight:            int(req.GetWeight()),
 		HeartbeatInterval: time.Duration(req.GetHeartbeatIntervalMs()) * time.Millisecond,
+		RequestID:         req.GetRequestId(),
 	})
 	if err != nil {
 		return nil, grpcError(err)
@@ -128,7 +129,12 @@ func (h *Handler) Watch(req *registrypb.WatchRequest, stream registrypb.Registry
 				return status.Error(codes.ResourceExhausted, "watch subscriber fell behind")
 			}
 
-			if err := stream.Send(watchEventToProto(change)); err != nil {
+			response := watchEventToProto(change)
+			if change.Type == registry.StateChangeRestored {
+				response = watchSnapshotToProto(change.Instances)
+			}
+
+			if err := stream.Send(response); err != nil {
 				return err
 			}
 

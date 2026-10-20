@@ -76,11 +76,23 @@ func (w *WatchManager) removeSubscriber(serviceName string, subscriber *Subscrib
 }
 
 func (w *WatchManager) onStateChange(change StateChange) {
-	serviceName := change.Instance.ID.ServiceName
-
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
+	if change.Type == StateChangeRestored {
+		for serviceName := range w.subscribers {
+			w.publish(serviceName, StateChange{
+				Type:      StateChangeRestored,
+				Instances: healthyInstances(serviceInstances(change.Instances, serviceName)),
+			})
+		}
+		return
+	}
+
+	w.publish(change.Instance.ID.ServiceName, change)
+}
+
+func (w *WatchManager) publish(serviceName string, change StateChange) {
 	w.subscribers[serviceName] = slices.DeleteFunc(
 		w.subscribers[serviceName],
 		func(s *Subscriber) bool {
@@ -93,4 +105,15 @@ func (w *WatchManager) onStateChange(change StateChange) {
 			}
 		},
 	)
+}
+
+func serviceInstances(instances []ServiceInstance, serviceName string) []ServiceInstance {
+	var filtered []ServiceInstance
+	for _, instance := range instances {
+		if instance.ID.ServiceName == serviceName {
+			filtered = append(filtered, instance)
+		}
+	}
+
+	return filtered
 }

@@ -1,20 +1,86 @@
+x-registry-addresses: &registry-addresses registry-1:7000,registry-2:7000,registry-3:7000,registry-4:7000,registry-5:7000
+
+x-registry-dependencies: &registry-dependencies
+  - registry-1
+  - registry-2
+  - registry-3
+  - registry-4
+  - registry-5
+
+x-registry-environment: &registry-environment
+  BACKEND: cp
+  CLUSTER_MEMBERS: registry-1=registry-1:7000|registry-1:7001,registry-2=registry-2:7000|registry-2:7001,registry-3=registry-3:7000|registry-3:7001,registry-4=registry-4:7000|registry-4:7001,registry-5=registry-5:7000|registry-5:7001
+  GRPC_ADDRESS: 0.0.0.0:7000
+  OBSERVABILITY_ADDRESS: 0.0.0.0:10000
+  HEARTBEAT_TTL_MULTIPLIER: 3
+  RAFT_BIND_ADDRESS: 0.0.0.0:7001
+  RAFT_DATA_DIR: /data/raft
+  FORWARD_TIMEOUT: 2s
+  FORWARD_MAX_ATTEMPTS: 3
+
+x-registry: &registry
+  image: daanilo/registry:dev
+  build:
+    context: .
+    args:
+      SERVICE: registry
+
+x-mock-service-environment: &mock-service-environment
+  NAME: mock-service
+  REGISTRY_ADDRESSES: *registry-addresses
+  HTTP_ADDRESS: 0.0.0.0:9000
+  OBSERVABILITY_ADDRESS: 0.0.0.0:10020
+  WEIGHT: 1
+  HEARTBEAT_INTERVAL: 5s
+
+x-mock-service: &mock-service
+  image: daanilo/mock-service:dev
+  build:
+    context: .
+    args:
+      SERVICE: mock-service
+  depends_on: *registry-dependencies
+
 services:
-  registry:
-    image: daanilo/registry:dev
-    build:
-      context: .
-      args:
-        SERVICE: registry
+  registry-1:
+    <<: *registry
     environment:
+      <<: *registry-environment
       INSTANCE_ID: registry-1
-      BACKEND: ap
-      CLUSTER_MEMBERS: registry:7000
-      GRPC_ADDRESS: 0.0.0.0:7000
-      OBSERVABILITY_ADDRESS: 0.0.0.0:10000
-      HEARTBEAT_TTL_MULTIPLIER: 3
-    ports:
-      - "7000:7000"
-      - "10000:10000"
+    volumes:
+      - registry-1-data:/data
+
+  registry-2:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-2
+    volumes:
+      - registry-2-data:/data
+
+  registry-3:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-3
+    volumes:
+      - registry-3-data:/data
+
+  registry-4:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-4
+    volumes:
+      - registry-4-data:/data
+
+  registry-5:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-5
+    volumes:
+      - registry-5-data:/data
 
   load-balancer:
     image: daanilo/load-balancer:dev
@@ -23,7 +89,7 @@ services:
       args:
         SERVICE: load-balancer
     environment:
-      REGISTRY_ADDRESSES: registry:7000
+      REGISTRY_ADDRESSES: *registry-addresses
       SERVICES: mock-service:round-robin
       HTTP_ADDRESS: 0.0.0.0:8000
       OBSERVABILITY_ADDRESS: 0.0.0.0:10010
@@ -33,29 +99,28 @@ services:
     ports:
       - "8000:8000"
       - "10010:10010"
-    depends_on:
-      - registry
+    depends_on: *registry-dependencies
 
-  mock-service:
-    image: daanilo/mock-service:dev
-    build:
-      context: .
-      args:
-        SERVICE: mock-service
+  mock-service-1:
+    <<: *mock-service
     environment:
-      NAME: mock-service
+      <<: *mock-service-environment
       INSTANCE_ID: mock-service-1
-      REGISTRY_ADDRESSES: registry:7000
-      ADVERTISE_ADDRESS: mock-service:9000
-      HTTP_ADDRESS: 0.0.0.0:9000
-      OBSERVABILITY_ADDRESS: 0.0.0.0:10020
-      WEIGHT: 1
-      HEARTBEAT_INTERVAL: 5s
-    ports:
-      - "9000:9000"
-      - "10020:10020"
-    depends_on:
-      - registry
+      ADVERTISE_ADDRESS: mock-service-1:9000
+
+  mock-service-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      INSTANCE_ID: mock-service-2
+      ADVERTISE_ADDRESS: mock-service-2:9000
+
+  mock-service-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      INSTANCE_ID: mock-service-3
+      ADVERTISE_ADDRESS: mock-service-3:9000
 
   dozzle:
     image: amir20/dozzle:latest
@@ -81,6 +146,14 @@ services:
     ports:
       - "8083:9090"
     depends_on:
-      - registry
       - load-balancer
-      - mock-service
+      - mock-service-1
+      - mock-service-2
+      - mock-service-3
+
+volumes:
+  registry-1-data:
+  registry-2-data:
+  registry-3-data:
+  registry-4-data:
+  registry-5-data:

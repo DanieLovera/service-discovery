@@ -8,7 +8,7 @@ import (
 func TestLoadRegistry(t *testing.T) {
 	t.Setenv("INSTANCE_ID", "registry-1")
 	t.Setenv("BACKEND", "ap")
-	t.Setenv("CLUSTER_MEMBERS", "registry-1:7000, registry-2:7000")
+	t.Setenv("CLUSTER_MEMBERS", "registry-1=registry-1:7000|registry-1:7001, registry-2=registry-2:7000|registry-2:7001")
 
 	cfg, err := LoadRegistry()
 	if err != nil {
