@@ -30,7 +30,8 @@ proto:
 		--go_opt=module=tpiii.local/daniel-tpiii \
 		--go-grpc_out=. \
 		--go-grpc_opt=module=tpiii.local/daniel-tpiii \
-		proto/registry.proto
+		proto/registry.proto \
+		proto/forwarding.proto
 
 fmt:
 	@$(GO) fmt ./...

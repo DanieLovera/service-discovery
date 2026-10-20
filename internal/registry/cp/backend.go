@@ -13,7 +13,11 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb/v2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	forwardingpb "tpiii.local/daniel-tpiii/gen/forwarding"
 	"tpiii.local/daniel-tpiii/internal/registry"
 )
 
@@ -28,15 +32,18 @@ const (
 var _ registry.Backend = (*Backend)(nil)
 
 type Config struct {
-	NodeID      string
-	BindAddress string
-	DataDir     string
-	Members     []registry.ClusterMember
+	NodeID             string
+	BindAddress        string
+	DataDir            string
+	Members            []registry.ClusterMember
+	ForwardTimeout     time.Duration
+	ForwardMaxAttempts int
 }
 
 type Backend struct {
-	config Config
-	store  *stateStore
+	config    Config
+	store     *stateStore
+	forwarder *forwarder
 
 	raft      *raft.Raft
 	boltStore *raftboltdb.BoltStore
@@ -44,9 +51,14 @@ type Backend struct {
 
 func NewBackend(config Config) *Backend {
 	return &Backend{
-		config: config,
-		store:  newStateStore(),
+		config:    config,
+		store:     newStateStore(),
+		forwarder: newForwarder(config.NodeID),
 	}
+}
+
+func (b *Backend) RegisterGRPC(registrar grpc.ServiceRegistrar) {
+	forwardingpb.RegisterForwardingServer(registrar, &forwardingServer{backend: b})
 }
 
 func (b *Backend) Start(ctx context.Context) error {
@@ -167,7 +179,7 @@ func (b *Backend) waitForLeader(ctx context.Context) error {
 
 func (b *Backend) Shutdown(ctx context.Context) error {
 	if b.raft == nil {
-		return nil
+		return b.forwarder.close()
 	}
 
 	done := make(chan error, 1)
@@ -182,7 +194,7 @@ func (b *Backend) Shutdown(ctx context.Context) error {
 		err = ctx.Err()
 	}
 
-	return errors.Join(err, b.boltStore.Close())
+	return errors.Join(err, b.boltStore.Close(), b.forwarder.close())
 }
 
 func (b *Backend) Register(ctx context.Context, params registry.RegisterParams) error {
@@ -206,11 +218,22 @@ func (b *Backend) Recover(ctx context.Context, id registry.ServiceInstanceID) er
 }
 
 func (b *Backend) Lookup(ctx context.Context, id registry.ServiceInstanceID) ([]registry.ServiceInstance, error) {
-	if err := b.consistentRead(ctx); err != nil {
-		return nil, err
-	}
+	var instances []registry.ServiceInstance
 
-	return b.store.Lookup(id)
+	err := b.onLeader(ctx,
+		func(ctx context.Context) error {
+			var err error
+			instances, err = b.lookupLocal(ctx, id)
+			return err
+		},
+		func(ctx context.Context, leader registry.ClusterMember) error {
+			var err error
+			instances, err = b.forwarder.lookup(ctx, leader, id)
+			return err
+		},
+	)
+
+	return instances, err
 }
 
 func (b *Backend) RegisterStateChangeHandler(handler registry.StateChangeHandler) {
@@ -223,6 +246,73 @@ func (b *Backend) apply(ctx context.Context, cmd command) error {
 		return fmt.Errorf("encode command: %w", err)
 	}
 
+	return b.onLeader(ctx,
+		func(ctx context.Context) error {
+			return b.applyLocal(ctx, data)
+		},
+		func(ctx context.Context, leader registry.ClusterMember) error {
+			return b.forwarder.apply(ctx, leader, data)
+		},
+	)
+}
+
+func (b *Backend) onLeader(
+	ctx context.Context,
+	local func(context.Context) error,
+	remote func(context.Context, registry.ClusterMember) error,
+) error {
+	var err error
+
+	for range b.config.ForwardMaxAttempts {
+		err = b.attempt(ctx, local, remote)
+		if !isTransient(err) {
+			return err
+		}
+
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+	}
+
+	return fmt.Errorf("%w: %w", registry.ErrUnavailable, err)
+}
+
+func (b *Backend) attempt(
+	ctx context.Context,
+	local func(context.Context) error,
+	remote func(context.Context, registry.ClusterMember) error,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, b.config.ForwardTimeout)
+	defer cancel()
+
+	if _, leaderID := b.raft.LeaderWithID(); leaderID == "" {
+		if err := b.waitForLeader(ctx); err != nil {
+			return fmt.Errorf("%w: %w", registry.ErrNotLeader, err)
+		}
+	}
+
+	_, leaderID := b.raft.LeaderWithID()
+	if string(leaderID) == b.config.NodeID {
+		return local(ctx)
+	}
+
+	leader, ok := b.member(string(leaderID))
+	if !ok {
+		return fmt.Errorf("%w: leader %q is not a cluster member", registry.ErrNotLeader, leaderID)
+	}
+
+	return remote(ctx, leader)
+}
+
+func (b *Backend) lookupLocal(ctx context.Context, id registry.ServiceInstanceID) ([]registry.ServiceInstance, error) {
+	if err := b.consistentRead(ctx); err != nil {
+		return nil, err
+	}
+
+	return b.store.Lookup(id)
+}
+
+func (b *Backend) applyLocal(ctx context.Context, data []byte) error {
 	timeout, err := remaining(ctx)
 	if err != nil {
 		return err
@@ -282,4 +372,23 @@ func raftError(err error) error {
 	}
 
 	return err
+}
+
+func isTransient(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, registry.ErrNotLeader) ||
+		errors.Is(err, context.DeadlineExceeded) ||
+		errors.Is(err, raft.ErrEnqueueTimeout) {
+		return true
+	}
+
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded:
+		return true
+	default:
+		return false
+	}
 }

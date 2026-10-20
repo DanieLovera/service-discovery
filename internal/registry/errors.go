@@ -8,4 +8,5 @@ var (
 	ErrServiceInstanceDeleted       = errors.New("service instance is deleted")
 	ErrServiceNotFound              = errors.New("service not found")
 	ErrNotLeader                    = errors.New("registry node is not the leader")
+	ErrUnavailable                  = errors.New("registry leader unavailable")
 )

@@ -6,6 +6,8 @@ x-registry-environment: &registry-environment
   HEARTBEAT_TTL_MULTIPLIER: 3
   RAFT_BIND_ADDRESS: 0.0.0.0:7001
   RAFT_DATA_DIR: /data/raft
+  FORWARD_TIMEOUT: 2s
+  FORWARD_MAX_ATTEMPTS: 3
 
 x-registry: &registry
   image: daanilo/registry:dev

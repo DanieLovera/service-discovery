@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
+
+	googlegrpc "google.golang.org/grpc"
 
 	"tpiii.local/daniel-tpiii/internal/metrics"
 	"tpiii.local/daniel-tpiii/internal/observability"
@@ -24,7 +27,13 @@ type Params struct {
 	TTLMultiplier        int
 	RaftBindAddress      string
 	RaftDataDir          string
+	ForwardTimeout       time.Duration
+	ForwardMaxAttempts   int
 	Logger               *slog.Logger
+}
+
+type grpcRegistrar interface {
+	RegisterGRPC(registrar googlegrpc.ServiceRegistrar)
 }
 
 type App struct {
@@ -45,7 +54,12 @@ func New(params Params) (*App, error) {
 	healthManager := registry.NewHealthManager(backend, params.TTLMultiplier, params.Logger)
 	watchManager := registry.NewWatchManager(backend)
 	grpcHandler := grpc.NewHandler(registryManager, healthManager, watchManager)
-	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger)
+	var registrations []func(googlegrpc.ServiceRegistrar)
+	if registrar, ok := backend.(grpcRegistrar); ok {
+		registrations = append(registrations, registrar.RegisterGRPC)
+	}
+
+	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger, registrations...)
 
 	processMetrics := metrics.New("registry", params.NodeID)
 	metricsHandler := processMetrics.Handler()
@@ -131,10 +145,12 @@ func newBackend(params Params) (registry.Backend, error) {
 	switch params.Backend {
 	case "cp":
 		return cp.NewBackend(cp.Config{
-			NodeID:      params.NodeID,
-			BindAddress: params.RaftBindAddress,
-			DataDir:     params.RaftDataDir,
-			Members:     params.ClusterMembers,
+			NodeID:             params.NodeID,
+			BindAddress:        params.RaftBindAddress,
+			DataDir:            params.RaftDataDir,
+			Members:            params.ClusterMembers,
+			ForwardTimeout:     params.ForwardTimeout,
+			ForwardMaxAttempts: params.ForwardMaxAttempts,
 		}), nil
 	case "ap":
 		return ap.NewBackend(), nil

@@ -22,7 +22,12 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func NewServer(address string, handler registrypb.RegistryServer, logger *slog.Logger) *Server {
+func NewServer(
+	address string,
+	handler registrypb.RegistryServer,
+	logger *slog.Logger,
+	registrations ...func(googlegrpc.ServiceRegistrar),
+) *Server {
 	grpcServer := googlegrpc.NewServer(
 		googlegrpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 			MinTime:             keepaliveMinTime,
@@ -30,6 +35,10 @@ func NewServer(address string, handler registrypb.RegistryServer, logger *slog.L
 		}),
 	)
 	registrypb.RegisterRegistryServer(grpcServer, handler)
+
+	for _, register := range registrations {
+		register(grpcServer)
+	}
 
 	return &Server{
 		grpcServer: grpcServer,
