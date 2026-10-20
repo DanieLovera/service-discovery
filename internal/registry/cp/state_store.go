@@ -146,6 +146,7 @@ func (s *stateStore) Replace(instances []registry.ServiceInstance) {
 	defer s.mu.Unlock()
 
 	s.instances = restored
+	s.notify(registry.StateChange{Type: registry.StateChangeRestored, Instances: instances})
 }
 
 func (s *stateStore) setStatus(

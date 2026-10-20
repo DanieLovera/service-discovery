@@ -187,6 +187,18 @@ func (h *HealthManager) sendError(ctx context.Context, err error) {
 }
 
 func (h *HealthManager) onStateChange(change StateChange) {
+	if change.Type == StateChangeRestored {
+		for _, instance := range change.Instances {
+			switch instance.Status {
+			case ServiceInstanceStatusDeleted:
+				h.onStateChange(StateChange{Type: StateChangeDeleted, Instance: instance})
+			case ServiceInstanceStatusExpired:
+				h.onStateChange(StateChange{Type: StateChangeExpired, Instance: instance})
+			}
+		}
+		return
+	}
+
 	if change.Type == StateChangeDeleted {
 		h.removeTTL(change.Instance.ID)
 		return

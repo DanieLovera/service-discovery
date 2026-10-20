@@ -8,8 +8,10 @@ import (
 )
 
 type WatchEvent struct {
-	Instance loadbalancer.ServiceInstance
-	Healthy  bool
+	Instance   loadbalancer.ServiceInstance
+	Healthy    bool
+	IsSnapshot bool
+	Snapshot   []loadbalancer.ServiceInstance
 }
 
 type Subscription struct {
@@ -20,6 +22,13 @@ func (s *Subscription) WaitEvent() (WatchEvent, error) {
 	response, err := s.stream.Recv()
 	if err != nil {
 		return WatchEvent{}, err
+	}
+
+	if snapshot := response.GetSnapshot(); snapshot != nil {
+		return WatchEvent{
+			IsSnapshot: true,
+			Snapshot:   serviceInstancesFromProto(snapshot.GetInstances()),
+		}, nil
 	}
 
 	instance := response.GetEvent().GetInstance()

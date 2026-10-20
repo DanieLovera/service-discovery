@@ -128,7 +128,12 @@ func (h *Handler) Watch(req *registrypb.WatchRequest, stream registrypb.Registry
 				return status.Error(codes.ResourceExhausted, "watch subscriber fell behind")
 			}
 
-			if err := stream.Send(watchEventToProto(change)); err != nil {
+			response := watchEventToProto(change)
+			if change.Type == registry.StateChangeRestored {
+				response = watchSnapshotToProto(change.Instances)
+			}
+
+			if err := stream.Send(response); err != nil {
 				return err
 			}
 
