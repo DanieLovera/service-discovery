@@ -26,7 +26,7 @@ type Registry struct {
 	ObservabilityBindAddress string
 	ClusterMembers           []registry.ClusterMember
 	TTLMultiplier            int
-	RaftBindAddress          string
+	PeerBindAddress          string
 	RaftDataDir              string
 	ForwardTimeout           time.Duration
 	ForwardMaxAttempts       int
@@ -63,7 +63,7 @@ func LoadRegistry() (Registry, error) {
 		ObservabilityBindAddress: stringFromEnvOrDefault("OBSERVABILITY_BIND_ADDRESS", defaultRegistryObservabilityBindAddress),
 		ClusterMembers:           clusterMembers,
 		TTLMultiplier:            ttlMultiplier,
-		RaftBindAddress:          stringFromEnvOrDefault("RAFT_BIND_ADDRESS", defaultRegistryRaftBindAddress),
+		PeerBindAddress:          stringFromEnvOrDefault("PEER_BIND_ADDRESS", defaultRegistryPeerBindAddress),
 		RaftDataDir:              stringFromEnvOrDefault("RAFT_DATA_DIR", defaultRaftDataDir),
 		ForwardTimeout:           forwardTimeout,
 		ForwardMaxAttempts:       forwardMaxAttempts,
@@ -102,16 +102,16 @@ func parseClusterMembers(raw string) ([]registry.ClusterMember, error) {
 
 	for _, item := range splitCSV(raw) {
 		id, addresses, ok := strings.Cut(item, "=")
-		grpcAddress, raftAddress, ok2 := strings.Cut(addresses, "|")
+		grpcAddress, peerAddress, ok2 := strings.Cut(addresses, "|")
 
 		member := registry.ClusterMember{
 			ID:          strings.TrimSpace(id),
 			GRPCAddress: strings.TrimSpace(grpcAddress),
-			RaftAddress: strings.TrimSpace(raftAddress),
+			PeerAddress: strings.TrimSpace(peerAddress),
 		}
 
-		if !ok || !ok2 || member.ID == "" || member.GRPCAddress == "" || member.RaftAddress == "" {
-			return nil, fmt.Errorf("CLUSTER_MEMBERS entry %q must have the form id=grpc_address|raft_address", item)
+		if !ok || !ok2 || member.ID == "" || member.GRPCAddress == "" || member.PeerAddress == "" {
+			return nil, fmt.Errorf("CLUSTER_MEMBERS entry %q must have the form id=grpc_address|peer_address", item)
 		}
 
 		if containsMember(members, member.ID) {

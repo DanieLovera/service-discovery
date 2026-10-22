@@ -7,7 +7,7 @@ import (
 
 const (
 	defaultRegistryGRPCBindAddress          = "0.0.0.0:7000"
-	defaultRegistryRaftBindAddress          = "0.0.0.0:7001"
+	defaultRegistryPeerBindAddress          = "0.0.0.0:7001"
 	defaultLBHTTPBindAddress                = "0.0.0.0:8000"
 	defaultMockHTTPBindAddress              = "0.0.0.0:9000"
 	defaultRegistryObservabilityBindAddress = "0.0.0.0:10000"

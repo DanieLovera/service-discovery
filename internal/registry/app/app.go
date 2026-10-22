@@ -25,7 +25,7 @@ type Params struct {
 	ObservabilityBindAddress string
 	ClusterMembers           []registry.ClusterMember
 	TTLMultiplier            int
-	RaftBindAddress          string
+	PeerBindAddress          string
 	RaftDataDir              string
 	ForwardTimeout           time.Duration
 	ForwardMaxAttempts       int
@@ -146,14 +146,14 @@ func newBackend(params Params) (registry.Backend, error) {
 	case "cp":
 		return cp.NewBackend(cp.Config{
 			NodeID:             params.NodeID,
-			BindAddress:        params.RaftBindAddress,
+			BindAddress:        params.PeerBindAddress,
 			DataDir:            params.RaftDataDir,
 			Members:            params.ClusterMembers,
 			ForwardTimeout:     params.ForwardTimeout,
 			ForwardMaxAttempts: params.ForwardMaxAttempts,
 		}), nil
 	case "ap":
-		return ap.NewBackend(), nil
+		return ap.NewBackend(ap.Config{NodeID: params.NodeID}), nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
 	}

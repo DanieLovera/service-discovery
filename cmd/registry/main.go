@@ -44,7 +44,7 @@ func start() (err error) {
 		ObservabilityBindAddress: cfg.ObservabilityBindAddress,
 		ClusterMembers:           cfg.ClusterMembers,
 		TTLMultiplier:            cfg.TTLMultiplier,
-		RaftBindAddress:          cfg.RaftBindAddress,
+		PeerBindAddress:          cfg.PeerBindAddress,
 		RaftDataDir:              cfg.RaftDataDir,
 		ForwardTimeout:           cfg.ForwardTimeout,
 		ForwardMaxAttempts:       cfg.ForwardMaxAttempts,
