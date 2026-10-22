@@ -18,8 +18,8 @@ const (
 )
 
 type LoadBalancer struct {
-	HTTPAddress              string
-	ObservabilityAddress     string
+	HTTPBindAddress          string
+	ObservabilityBindAddress string
 	RegistryAddresses        []string
 	RegistryRetryInterval    time.Duration
 	RegistryKeepaliveTime    time.Duration
@@ -50,8 +50,8 @@ func LoadLoadBalancer() (LoadBalancer, error) {
 	}
 
 	cfg := LoadBalancer{
-		HTTPAddress:              stringFromEnvOrDefault("HTTP_ADDRESS", defaultLBHTTPAddress),
-		ObservabilityAddress:     stringFromEnvOrDefault("OBSERVABILITY_ADDRESS", defaultLBObservabilityAddress),
+		HTTPBindAddress:          stringFromEnvOrDefault("HTTP_BIND_ADDRESS", defaultLBHTTPBindAddress),
+		ObservabilityBindAddress: stringFromEnvOrDefault("OBSERVABILITY_BIND_ADDRESS", defaultLBObservabilityBindAddress),
 		RegistryAddresses:        splitCSV(os.Getenv("REGISTRY_ADDRESSES")),
 		RegistryRetryInterval:    retryInterval,
 		RegistryKeepaliveTime:    keepaliveTime,

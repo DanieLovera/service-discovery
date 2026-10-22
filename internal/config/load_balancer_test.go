@@ -14,12 +14,12 @@ func TestLoadLoadBalancer(t *testing.T) {
 		t.Fatalf("LoadLoadBalancer() error = %v, want nil", err)
 	}
 
-	if cfg.HTTPAddress != defaultLBHTTPAddress {
-		t.Errorf("HTTPAddress = %q, want %q", cfg.HTTPAddress, defaultLBHTTPAddress)
+	if cfg.HTTPBindAddress != defaultLBHTTPBindAddress {
+		t.Errorf("HTTPBindAddress = %q, want %q", cfg.HTTPBindAddress, defaultLBHTTPBindAddress)
 	}
 
-	if cfg.ObservabilityAddress != defaultLBObservabilityAddress {
-		t.Errorf("ObservabilityAddress = %q, want %q", cfg.ObservabilityAddress, defaultLBObservabilityAddress)
+	if cfg.ObservabilityBindAddress != defaultLBObservabilityBindAddress {
+		t.Errorf("ObservabilityBindAddress = %q, want %q", cfg.ObservabilityBindAddress, defaultLBObservabilityBindAddress)
 	}
 
 	if len(cfg.RegistryAddresses) != 2 {

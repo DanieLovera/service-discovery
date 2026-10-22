@@ -38,8 +38,8 @@ func start() (err error) {
 	defer stop()
 
 	application, err := app.New(app.Params{
-		HTTPAddress:              cfg.HTTPAddress,
-		ObservabilityAddress:     cfg.ObservabilityAddress,
+		HTTPBindAddress:          cfg.HTTPBindAddress,
+		ObservabilityBindAddress: cfg.ObservabilityBindAddress,
 		RegistryAddresses:        cfg.RegistryAddresses,
 		RegistryRetryInterval:    cfg.RegistryRetryInterval,
 		RegistryKeepaliveTime:    cfg.RegistryKeepaliveTime,

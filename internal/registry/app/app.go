@@ -19,17 +19,17 @@ import (
 )
 
 type Params struct {
-	NodeID               string
-	Backend              string
-	GRPCAddress          string
-	ObservabilityAddress string
-	ClusterMembers       []registry.ClusterMember
-	TTLMultiplier        int
-	RaftBindAddress      string
-	RaftDataDir          string
-	ForwardTimeout       time.Duration
-	ForwardMaxAttempts   int
-	Logger               *slog.Logger
+	NodeID                   string
+	Backend                  string
+	GRPCBindAddress          string
+	ObservabilityBindAddress string
+	ClusterMembers           []registry.ClusterMember
+	TTLMultiplier            int
+	RaftBindAddress          string
+	RaftDataDir              string
+	ForwardTimeout           time.Duration
+	ForwardMaxAttempts       int
+	Logger                   *slog.Logger
 }
 
 type grpcRegistrar interface {
@@ -59,12 +59,12 @@ func New(params Params) (*App, error) {
 		registrations = append(registrations, registrar.RegisterGRPC)
 	}
 
-	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger, registrations...)
+	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, params.Logger, registrations...)
 
 	processMetrics := metrics.New("registry", params.NodeID)
 	metricsHandler := processMetrics.Handler()
 	observabilityServer := observability.NewServer(
-		params.ObservabilityAddress,
+		params.ObservabilityBindAddress,
 		metricsHandler,
 		params.Logger,
 	)

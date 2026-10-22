@@ -18,15 +18,15 @@ import (
 )
 
 type Params struct {
-	ServiceName          string
-	InstanceID           string
-	HTTPAddress          string
-	AdvertiseAddress     string
-	ObservabilityAddress string
-	RegistryAddresses    []string
-	Weight               int
-	HeartbeatInterval    time.Duration
-	Logger               *slog.Logger
+	ServiceName              string
+	InstanceID               string
+	HTTPBindAddress          string
+	AdvertiseAddress         string
+	ObservabilityBindAddress string
+	RegistryAddresses        []string
+	Weight                   int
+	HeartbeatInterval        time.Duration
+	Logger                   *slog.Logger
 }
 
 type App struct {
@@ -53,14 +53,14 @@ func New(params Params) (*App, error) {
 	metricsHandler := processMetrics.Handler()
 
 	httpServer := http.NewServer(
-		params.HTTPAddress,
+		params.HTTPBindAddress,
 		params.ServiceName,
 		params.InstanceID,
 		params.Logger,
 	)
 
 	observabilityServer := observability.NewServer(
-		params.ObservabilityAddress,
+		params.ObservabilityBindAddress,
 		metricsHandler,
 		params.Logger,
 	)

@@ -20,17 +20,17 @@ const (
 )
 
 type Registry struct {
-	NodeID               string
-	Backend              string
-	GRPCAddress          string
-	ObservabilityAddress string
-	ClusterMembers       []registry.ClusterMember
-	TTLMultiplier        int
-	RaftBindAddress      string
-	RaftDataDir          string
-	ForwardTimeout       time.Duration
-	ForwardMaxAttempts   int
-	Log                  logging.Config
+	NodeID                   string
+	Backend                  string
+	GRPCBindAddress          string
+	ObservabilityBindAddress string
+	ClusterMembers           []registry.ClusterMember
+	TTLMultiplier            int
+	RaftBindAddress          string
+	RaftDataDir              string
+	ForwardTimeout           time.Duration
+	ForwardMaxAttempts       int
+	Log                      logging.Config
 }
 
 func LoadRegistry() (Registry, error) {
@@ -57,16 +57,16 @@ func LoadRegistry() (Registry, error) {
 	}
 
 	cfg := Registry{
-		NodeID:               strings.TrimSpace(os.Getenv("INSTANCE_ID")),
-		Backend:              strings.ToLower(stringFromEnvOrDefault("BACKEND", "ap")),
-		GRPCAddress:          stringFromEnvOrDefault("GRPC_ADDRESS", defaultRegistryGRPCAddress),
-		ObservabilityAddress: stringFromEnvOrDefault("OBSERVABILITY_ADDRESS", defaultRegistryObservabilityAddress),
-		ClusterMembers:       clusterMembers,
-		TTLMultiplier:        ttlMultiplier,
-		RaftBindAddress:      stringFromEnvOrDefault("RAFT_BIND_ADDRESS", defaultRegistryRaftAddress),
-		RaftDataDir:          stringFromEnvOrDefault("RAFT_DATA_DIR", defaultRaftDataDir),
-		ForwardTimeout:       forwardTimeout,
-		ForwardMaxAttempts:   forwardMaxAttempts,
+		NodeID:                   strings.TrimSpace(os.Getenv("INSTANCE_ID")),
+		Backend:                  strings.ToLower(stringFromEnvOrDefault("BACKEND", "ap")),
+		GRPCBindAddress:          stringFromEnvOrDefault("GRPC_BIND_ADDRESS", defaultRegistryGRPCBindAddress),
+		ObservabilityBindAddress: stringFromEnvOrDefault("OBSERVABILITY_BIND_ADDRESS", defaultRegistryObservabilityBindAddress),
+		ClusterMembers:           clusterMembers,
+		TTLMultiplier:            ttlMultiplier,
+		RaftBindAddress:          stringFromEnvOrDefault("RAFT_BIND_ADDRESS", defaultRegistryRaftBindAddress),
+		RaftDataDir:              stringFromEnvOrDefault("RAFT_DATA_DIR", defaultRaftDataDir),
+		ForwardTimeout:           forwardTimeout,
+		ForwardMaxAttempts:       forwardMaxAttempts,
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("LOG_FORMAT", "json"),

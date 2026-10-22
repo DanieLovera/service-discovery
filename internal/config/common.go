@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	defaultRegistryGRPCAddress          = "0.0.0.0:7000"
-	defaultRegistryRaftAddress          = "0.0.0.0:7001"
-	defaultLBHTTPAddress                = "0.0.0.0:8000"
-	defaultMockHTTPAddress              = "0.0.0.0:9000"
-	defaultRegistryObservabilityAddress = "0.0.0.0:10000"
-	defaultLBObservabilityAddress       = "0.0.0.0:10010"
-	defaultMockObservabilityAddress     = "0.0.0.0:10020"
+	defaultRegistryGRPCBindAddress          = "0.0.0.0:7000"
+	defaultRegistryRaftBindAddress          = "0.0.0.0:7001"
+	defaultLBHTTPBindAddress                = "0.0.0.0:8000"
+	defaultMockHTTPBindAddress              = "0.0.0.0:9000"
+	defaultRegistryObservabilityBindAddress = "0.0.0.0:10000"
+	defaultLBObservabilityBindAddress       = "0.0.0.0:10010"
+	defaultMockObservabilityBindAddress     = "0.0.0.0:10020"
 )
 
 func stringFromEnvOrDefault(key, fallback string) string {

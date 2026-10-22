@@ -10,8 +10,8 @@ x-registry-dependencies: &registry-dependencies
 x-registry-environment: &registry-environment
   BACKEND: cp
   CLUSTER_MEMBERS: registry-1=registry-1:7000|registry-1:7001,registry-2=registry-2:7000|registry-2:7001,registry-3=registry-3:7000|registry-3:7001,registry-4=registry-4:7000|registry-4:7001,registry-5=registry-5:7000|registry-5:7001
-  GRPC_ADDRESS: 0.0.0.0:7000
-  OBSERVABILITY_ADDRESS: 0.0.0.0:10000
+  GRPC_BIND_ADDRESS: 0.0.0.0:7000
+  OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10000
   HEARTBEAT_TTL_MULTIPLIER: 3
   RAFT_BIND_ADDRESS: 0.0.0.0:7001
   RAFT_DATA_DIR: /data/raft
@@ -28,8 +28,8 @@ x-registry: &registry
 x-mock-service-environment: &mock-service-environment
   NAME: mock-service
   REGISTRY_ADDRESSES: *registry-addresses
-  HTTP_ADDRESS: 0.0.0.0:9000
-  OBSERVABILITY_ADDRESS: 0.0.0.0:10020
+  HTTP_BIND_ADDRESS: 0.0.0.0:9000
+  OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10020
   WEIGHT: 1
   HEARTBEAT_INTERVAL: 5s
 
@@ -91,8 +91,8 @@ services:
     environment:
       REGISTRY_ADDRESSES: *registry-addresses
       SERVICES: mock-service:round-robin
-      HTTP_ADDRESS: 0.0.0.0:8000
-      OBSERVABILITY_ADDRESS: 0.0.0.0:10010
+      HTTP_BIND_ADDRESS: 0.0.0.0:8000
+      OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10010
       REGISTRY_RETRY_INTERVAL: 1s
       REGISTRY_KEEPALIVE_TIME: 10s
       REGISTRY_KEEPALIVE_TIMEOUT: 5s
