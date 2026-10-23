@@ -29,6 +29,7 @@ type Params struct {
 	RaftDataDir              string
 	ForwardTimeout           time.Duration
 	ForwardMaxAttempts       int
+	GossipFanout             int
 	Logger                   *slog.Logger
 }
 
@@ -153,7 +154,13 @@ func newBackend(params Params) (registry.Backend, error) {
 			ForwardMaxAttempts: params.ForwardMaxAttempts,
 		}), nil
 	case "ap":
-		return ap.NewBackend(ap.Config{NodeID: params.NodeID}), nil
+		return ap.NewBackend(ap.Config{
+			NodeID:       params.NodeID,
+			BindAddress:  params.PeerBindAddress,
+			Members:      params.ClusterMembers,
+			GossipFanout: params.GossipFanout,
+			Logger:       params.Logger,
+		}), nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
 	}

@@ -17,6 +17,7 @@ const (
 	defaultRaftDataDir        = "/data/raft"
 	defaultForwardTimeout     = 2 * time.Second
 	defaultForwardMaxAttempts = 3
+	defaultGossipFanout       = 3
 )
 
 type Registry struct {
@@ -30,6 +31,7 @@ type Registry struct {
 	RaftDataDir              string
 	ForwardTimeout           time.Duration
 	ForwardMaxAttempts       int
+	GossipFanout             int
 	Log                      logging.Config
 }
 
@@ -45,6 +47,11 @@ func LoadRegistry() (Registry, error) {
 	}
 
 	forwardMaxAttempts, err := intFromEnvOrDefault("FORWARD_MAX_ATTEMPTS", defaultForwardMaxAttempts)
+	if err != nil {
+		return Registry{}, err
+	}
+
+	gossipFanout, err := intFromEnvOrDefault("GOSSIP_FANOUT", defaultGossipFanout)
 	if err != nil {
 		return Registry{}, err
 	}
@@ -67,6 +74,7 @@ func LoadRegistry() (Registry, error) {
 		RaftDataDir:              stringFromEnvOrDefault("RAFT_DATA_DIR", defaultRaftDataDir),
 		ForwardTimeout:           forwardTimeout,
 		ForwardMaxAttempts:       forwardMaxAttempts,
+		GossipFanout:             gossipFanout,
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("LOG_FORMAT", "json"),
@@ -93,6 +101,9 @@ func LoadRegistry() (Registry, error) {
 	}
 	if cfg.ForwardMaxAttempts <= 0 {
 		errs = append(errs, errors.New("FORWARD_MAX_ATTEMPTS must be greater than zero"))
+	}
+	if cfg.GossipFanout <= 0 {
+		errs = append(errs, errors.New("GOSSIP_FANOUT must be greater than zero"))
 	}
 	return cfg, errors.Join(errs...)
 }

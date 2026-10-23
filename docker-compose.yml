@@ -8,7 +8,7 @@ x-registry-dependencies: &registry-dependencies
   - registry-5
 
 x-registry-environment: &registry-environment
-  BACKEND: cp
+  BACKEND: ${BACKEND:-cp}
   CLUSTER_MEMBERS: registry-1=registry-1:7000|registry-1:7001,registry-2=registry-2:7000|registry-2:7001,registry-3=registry-3:7000|registry-3:7001,registry-4=registry-4:7000|registry-4:7001,registry-5=registry-5:7000|registry-5:7001
   GRPC_BIND_ADDRESS: 0.0.0.0:7000
   OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10000
@@ -17,6 +17,7 @@ x-registry-environment: &registry-environment
   RAFT_DATA_DIR: /data/raft
   FORWARD_TIMEOUT: 2s
   FORWARD_MAX_ATTEMPTS: 3
+  GOSSIP_FANOUT: 3
 
 x-registry: &registry
   image: daanilo/registry:dev

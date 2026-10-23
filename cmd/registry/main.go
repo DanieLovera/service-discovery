@@ -48,6 +48,7 @@ func start() (err error) {
 		RaftDataDir:              cfg.RaftDataDir,
 		ForwardTimeout:           cfg.ForwardTimeout,
 		ForwardMaxAttempts:       cfg.ForwardMaxAttempts,
+		GossipFanout:             cfg.GossipFanout,
 		Logger:                   logger,
 	})
 	if err != nil {
