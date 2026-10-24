@@ -180,11 +180,20 @@ func (a *App) runHeartbeats(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := a.registryClient.Heartbeat(ctx, a.instance); err != nil {
-				if ctx.Err() != nil {
-					return
+			err := a.registryClient.Heartbeat(ctx, a.instance)
+			if ctx.Err() != nil {
+				return
+			}
+
+			switch {
+			case status.Code(err) == codes.NotFound:
+				a.logger.Warn("Service instance not found in registry, registering again")
+
+				if err := a.register(ctx); err != nil && ctx.Err() == nil {
+					a.logger.Error("Failed to register service instance again", "error", err)
 				}
 
+			case err != nil:
 				a.logger.Error("Failed to send heartbeat", "error", err)
 			}
 
