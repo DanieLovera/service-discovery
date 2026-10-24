@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package ap;
+
+import "proto/ap/state.proto";
+
+option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
+
+message Packet {
+  string sender_id = 1;
+
+  oneof payload {
+    StateUpdate state_update = 2;
+  }
+}

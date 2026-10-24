@@ -49,6 +49,7 @@ func start() (err error) {
 		ForwardTimeout:           cfg.ForwardTimeout,
 		ForwardMaxAttempts:       cfg.ForwardMaxAttempts,
 		GossipFanout:             cfg.GossipFanout,
+		AntiEntropyInterval:      cfg.AntiEntropyInterval,
 		Logger:                   logger,
 	})
 	if err != nil {

@@ -2,9 +2,15 @@ package ap
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"slices"
+	"sync"
+	"time"
 
-	gossippb "tpiii.local/daniel-tpiii/gen/gossip"
+	"google.golang.org/grpc"
+
+	appb "tpiii.local/daniel-tpiii/gen/ap"
 	"tpiii.local/daniel-tpiii/internal/registry"
 )
 
@@ -12,36 +18,67 @@ import (
 var _ registry.Backend = (*Backend)(nil)
 
 type Config struct {
-	NodeID       string
-	BindAddress  string
-	Members      []registry.ClusterMember
-	GossipFanout int
-	Logger       *slog.Logger
+	NodeID              string
+	BindAddress         string
+	Members             []registry.ClusterMember
+	GossipFanout        int
+	AntiEntropyInterval time.Duration
+	Logger              *slog.Logger
 }
 
 type Backend struct {
-	store     *stateStore
-	transport *transport
-	gossiper  *gossiper
+	store      *stateStore
+	transport  *udpTransport
+	gossiper   *gossiper
+	reconciler *reconciler
+
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
 func NewBackend(config Config) *Backend {
+	peers := slices.DeleteFunc(slices.Clone(config.Members), func(member registry.ClusterMember) bool {
+		return member.ID == config.NodeID
+	})
+
 	store := newStateStore(config.NodeID)
-	transport := newTransport(config.BindAddress, config.Logger)
+	transport := newUDPTransport(config.BindAddress, config.Logger)
 
 	return &Backend{
-		store:     store,
-		transport: transport,
-		gossiper:  newGossiper(config.NodeID, config.Members, config.GossipFanout, store, transport, config.Logger),
+		store:      store,
+		transport:  transport,
+		gossiper:   newGossiper(config.NodeID, peers, config.GossipFanout, store, transport, config.Logger),
+		reconciler: newReconciler(config.NodeID, peers, config.AntiEntropyInterval, store, config.Logger),
 	}
 }
 
+func (b *Backend) RegisterGRPC(registrar grpc.ServiceRegistrar) {
+	appb.RegisterAntiEntropyServer(registrar, &antiEntropyServer{reconciler: b.reconciler})
+}
+
 func (b *Backend) Start(ctx context.Context) error {
-	return b.transport.listen(b.handle)
+	if err := b.transport.listen(b.handle); err != nil {
+		return err
+	}
+
+	b.reconciler.initialSync(ctx)
+
+	ctx, b.cancel = context.WithCancel(ctx)
+	b.wg.Go(func() {
+		b.reconciler.run(ctx)
+	})
+
+	return nil
 }
 
 func (b *Backend) Shutdown(ctx context.Context) error {
-	return b.transport.close()
+	if b.cancel != nil {
+		b.cancel()
+	}
+
+	b.wg.Wait()
+
+	return errors.Join(b.reconciler.close(), b.transport.close())
 }
 
 func (b *Backend) Register(ctx context.Context, params registry.RegisterParams) error {
@@ -82,9 +119,9 @@ func (b *Backend) publish(state instanceState, changed bool, err error) error {
 	return nil
 }
 
-func (b *Backend) handle(message *gossippb.Message) {
-	switch payload := message.GetPayload().(type) {
-	case *gossippb.Message_StateUpdate:
-		b.gossiper.receive(message.GetSenderId(), payload.StateUpdate)
+func (b *Backend) handle(packet *appb.Packet) {
+	switch payload := packet.GetPayload().(type) {
+	case *appb.Packet_StateUpdate:
+		b.gossiper.receive(packet.GetSenderId(), payload.StateUpdate)
 	}
 }

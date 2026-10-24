@@ -9,12 +9,12 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	gossippb "tpiii.local/daniel-tpiii/gen/gossip"
+	appb "tpiii.local/daniel-tpiii/gen/ap"
 )
 
 const maxPacketSize = 64 * 1024
 
-type transport struct {
+type udpTransport struct {
 	bindAddress string
 	logger      *slog.Logger
 
@@ -22,14 +22,14 @@ type transport struct {
 	wg   sync.WaitGroup
 }
 
-func newTransport(bindAddress string, logger *slog.Logger) *transport {
-	return &transport{
+func newUDPTransport(bindAddress string, logger *slog.Logger) *udpTransport {
+	return &udpTransport{
 		bindAddress: bindAddress,
 		logger:      logger,
 	}
 }
 
-func (t *transport) listen(handler func(*gossippb.Message)) error {
+func (t *udpTransport) listen(handler func(*appb.Packet)) error {
 	address, err := net.ResolveUDPAddr("udp", t.bindAddress)
 	if err != nil {
 		return fmt.Errorf("resolve peer bind address: %w", err)
@@ -48,10 +48,10 @@ func (t *transport) listen(handler func(*gossippb.Message)) error {
 	return nil
 }
 
-func (t *transport) send(address string, message *gossippb.Message) error {
-	data, err := proto.Marshal(message)
+func (t *udpTransport) send(address string, packet *appb.Packet) error {
+	data, err := proto.Marshal(packet)
 	if err != nil {
-		return fmt.Errorf("encode message: %w", err)
+		return fmt.Errorf("encode packet: %w", err)
 	}
 
 	target, err := net.ResolveUDPAddr("udp", address)
@@ -66,7 +66,7 @@ func (t *transport) send(address string, message *gossippb.Message) error {
 	return nil
 }
 
-func (t *transport) read(handler func(*gossippb.Message)) {
+func (t *udpTransport) read(handler func(*appb.Packet)) {
 	buffer := make([]byte, maxPacketSize)
 
 	for {
@@ -76,21 +76,21 @@ func (t *transport) read(handler func(*gossippb.Message)) {
 		}
 
 		if err != nil {
-			t.logger.Warn("Failed to read peer message", "error", err)
+			t.logger.Warn("Failed to read peer packet", "error", err)
 			continue
 		}
 
-		var message gossippb.Message
-		if err := proto.Unmarshal(buffer[:n], &message); err != nil {
-			t.logger.Warn("Discarding malformed peer message", "from", from.String(), "error", err)
+		var packet appb.Packet
+		if err := proto.Unmarshal(buffer[:n], &packet); err != nil {
+			t.logger.Warn("Discarding malformed peer packet", "from", from.String(), "error", err)
 			continue
 		}
 
-		handler(&message)
+		handler(&packet)
 	}
 }
 
-func (t *transport) close() error {
+func (t *udpTransport) close() error {
 	if t.conn == nil {
 		return nil
 	}

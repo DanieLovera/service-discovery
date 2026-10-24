@@ -1,16 +1,8 @@
 syntax = "proto3";
 
-package gossip;
+package ap;
 
-option go_package = "tpiii.local/daniel-tpiii/gen/gossip;gossippb";
-
-message Message {
-  string sender_id = 1;
-
-  oneof payload {
-    StateUpdate state_update = 2;
-  }
-}
+option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
 
 message StateUpdate {
   repeated InstanceState states = 1;
@@ -24,6 +16,11 @@ message InstanceState {
   int64 heartbeat_interval_ms = 5;
   InstanceStatus status = 6;
   Version version = 7;
+}
+
+message InstanceKey {
+  string service_name = 1;
+  string instance_id = 2;
 }
 
 message Version {

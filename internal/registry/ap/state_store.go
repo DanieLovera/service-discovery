@@ -115,6 +115,55 @@ func (s *stateStore) Merge(remote instanceState) bool {
 	return true
 }
 
+func (s *stateStore) Digest() map[registry.ServiceInstanceID]version {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	digest := make(map[registry.ServiceInstanceID]version, len(s.states))
+	for id, state := range s.states {
+		digest[id] = state.Version
+	}
+
+	return digest
+}
+
+func (s *stateStore) Diff(digest map[registry.ServiceInstanceID]version) ([]instanceState, []registry.ServiceInstanceID) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var newer []instanceState
+	for id, state := range s.states {
+		remote, exists := digest[id]
+		if !exists || state.Version.newerThan(remote) {
+			newer = append(newer, state)
+		}
+	}
+
+	var requested []registry.ServiceInstanceID
+	for id, remote := range digest {
+		state, exists := s.states[id]
+		if !exists || remote.newerThan(state.Version) {
+			requested = append(requested, id)
+		}
+	}
+
+	return newer, requested
+}
+
+func (s *stateStore) States(ids []registry.ServiceInstanceID) []instanceState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	states := make([]instanceState, 0, len(ids))
+	for _, id := range ids {
+		if state, exists := s.states[id]; exists {
+			states = append(states, state)
+		}
+	}
+
+	return states
+}
+
 func (s *stateStore) Lookup(id registry.ServiceInstanceID) ([]registry.ServiceInstance, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

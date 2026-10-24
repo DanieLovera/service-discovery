@@ -5,7 +5,7 @@ import (
 	"math/rand/v2"
 	"slices"
 
-	gossippb "tpiii.local/daniel-tpiii/gen/gossip"
+	appb "tpiii.local/daniel-tpiii/gen/ap"
 	"tpiii.local/daniel-tpiii/internal/registry"
 )
 
@@ -14,22 +14,18 @@ type gossiper struct {
 	peers     []registry.ClusterMember
 	fanout    int
 	store     *stateStore
-	transport *transport
+	transport *udpTransport
 	logger    *slog.Logger
 }
 
 func newGossiper(
 	nodeID string,
-	members []registry.ClusterMember,
+	peers []registry.ClusterMember,
 	fanout int,
 	store *stateStore,
-	transport *transport,
+	transport *udpTransport,
 	logger *slog.Logger,
 ) *gossiper {
-	peers := slices.DeleteFunc(slices.Clone(members), func(member registry.ClusterMember) bool {
-		return member.ID == nodeID
-	})
-
 	return &gossiper{
 		nodeID:    nodeID,
 		peers:     peers,
@@ -41,23 +37,23 @@ func newGossiper(
 }
 
 func (g *gossiper) broadcast(state instanceState, exclude string) {
-	message := &gossippb.Message{
+	packet := &appb.Packet{
 		SenderId: g.nodeID,
-		Payload: &gossippb.Message_StateUpdate{
-			StateUpdate: &gossippb.StateUpdate{
-				States: []*gossippb.InstanceState{instanceStateToProto(state)},
+		Payload: &appb.Packet_StateUpdate{
+			StateUpdate: &appb.StateUpdate{
+				States: []*appb.InstanceState{instanceStateToProto(state)},
 			},
 		},
 	}
 
 	for _, peer := range g.targets(exclude) {
-		if err := g.transport.send(peer.PeerAddress, message); err != nil {
+		if err := g.transport.send(peer.PeerAddress, packet); err != nil {
 			g.logger.Debug("Failed to gossip instance state", "peer", peer.ID, "error", err)
 		}
 	}
 }
 
-func (g *gossiper) receive(senderID string, update *gossippb.StateUpdate) {
+func (g *gossiper) receive(senderID string, update *appb.StateUpdate) {
 	for _, protoState := range update.GetStates() {
 		state, err := instanceStateFromProto(protoState)
 		if err != nil {

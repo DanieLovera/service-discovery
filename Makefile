@@ -32,7 +32,9 @@ proto:
 		--go-grpc_opt=module=tpiii.local/daniel-tpiii \
 		proto/registry.proto \
 		proto/forwarding.proto \
-		proto/gossip.proto
+		proto/ap/state.proto \
+		proto/ap/anti_entropy.proto \
+		proto/ap/packet.proto
 
 fmt:
 	@$(GO) fmt ./...

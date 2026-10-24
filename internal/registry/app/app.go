@@ -30,6 +30,7 @@ type Params struct {
 	ForwardTimeout           time.Duration
 	ForwardMaxAttempts       int
 	GossipFanout             int
+	AntiEntropyInterval      time.Duration
 	Logger                   *slog.Logger
 }
 
@@ -155,11 +156,12 @@ func newBackend(params Params) (registry.Backend, error) {
 		}), nil
 	case "ap":
 		return ap.NewBackend(ap.Config{
-			NodeID:       params.NodeID,
-			BindAddress:  params.PeerBindAddress,
-			Members:      params.ClusterMembers,
-			GossipFanout: params.GossipFanout,
-			Logger:       params.Logger,
+			NodeID:              params.NodeID,
+			BindAddress:         params.PeerBindAddress,
+			Members:             params.ClusterMembers,
+			GossipFanout:        params.GossipFanout,
+			AntiEntropyInterval: params.AntiEntropyInterval,
+			Logger:              params.Logger,
 		}), nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)

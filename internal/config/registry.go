@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	defaultTTLMultiplier      = 3
-	defaultRaftDataDir        = "/data/raft"
-	defaultForwardTimeout     = 2 * time.Second
-	defaultForwardMaxAttempts = 3
-	defaultGossipFanout       = 3
+	defaultTTLMultiplier       = 3
+	defaultRaftDataDir         = "/data/raft"
+	defaultForwardTimeout      = 2 * time.Second
+	defaultForwardMaxAttempts  = 3
+	defaultGossipFanout        = 3
+	defaultAntiEntropyInterval = 5 * time.Second
 )
 
 type Registry struct {
@@ -32,6 +33,7 @@ type Registry struct {
 	ForwardTimeout           time.Duration
 	ForwardMaxAttempts       int
 	GossipFanout             int
+	AntiEntropyInterval      time.Duration
 	Log                      logging.Config
 }
 
@@ -56,6 +58,11 @@ func LoadRegistry() (Registry, error) {
 		return Registry{}, err
 	}
 
+	antiEntropyInterval, err := durationFromEnvOrDefault("ANTI_ENTROPY_INTERVAL", defaultAntiEntropyInterval)
+	if err != nil {
+		return Registry{}, err
+	}
+
 	var errs []error
 
 	clusterMembers, err := parseClusterMembers(os.Getenv("CLUSTER_MEMBERS"))
@@ -75,6 +82,7 @@ func LoadRegistry() (Registry, error) {
 		ForwardTimeout:           forwardTimeout,
 		ForwardMaxAttempts:       forwardMaxAttempts,
 		GossipFanout:             gossipFanout,
+		AntiEntropyInterval:      antiEntropyInterval,
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("LOG_FORMAT", "json"),
@@ -104,6 +112,9 @@ func LoadRegistry() (Registry, error) {
 	}
 	if cfg.GossipFanout <= 0 {
 		errs = append(errs, errors.New("GOSSIP_FANOUT must be greater than zero"))
+	}
+	if cfg.AntiEntropyInterval <= 0 {
+		errs = append(errs, errors.New("ANTI_ENTROPY_INTERVAL must be greater than zero"))
 	}
 	return cfg, errors.Join(errs...)
 }
