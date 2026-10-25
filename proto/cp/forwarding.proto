@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package forwarding;
+package cp;
 
-option go_package = "tpiii.local/daniel-tpiii/gen/forwarding;forwardingpb";
+option go_package = "tpiii.local/daniel-tpiii/gen/cp;cppb";
 
 service Forwarding {
   rpc Apply(ApplyRequest) returns (ApplyResponse);

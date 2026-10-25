@@ -38,17 +38,25 @@ func start() (err error) {
 	defer stop()
 
 	application, err := app.New(app.Params{
-		NodeID:               cfg.NodeID,
-		Backend:              cfg.Backend,
-		GRPCAddress:          cfg.GRPCAddress,
-		ObservabilityAddress: cfg.ObservabilityAddress,
-		ClusterMembers:       cfg.ClusterMembers,
-		TTLMultiplier:        cfg.TTLMultiplier,
-		RaftBindAddress:      cfg.RaftBindAddress,
-		RaftDataDir:          cfg.RaftDataDir,
-		ForwardTimeout:       cfg.ForwardTimeout,
-		ForwardMaxAttempts:   cfg.ForwardMaxAttempts,
-		Logger:               logger,
+		NodeID:                   cfg.NodeID,
+		Backend:                  cfg.Backend,
+		GRPCBindAddress:          cfg.GRPCBindAddress,
+		ObservabilityBindAddress: cfg.ObservabilityBindAddress,
+		ClusterMembers:           cfg.ClusterMembers,
+		TTLMultiplier:            cfg.TTLMultiplier,
+		PeerBindAddress:          cfg.PeerBindAddress,
+		RaftDataDir:              cfg.RaftDataDir,
+		ForwardTimeout:           cfg.ForwardTimeout,
+		ForwardMaxAttempts:       cfg.ForwardMaxAttempts,
+		GossipFanout:             cfg.GossipFanout,
+		AntiEntropyInterval:      cfg.AntiEntropyInterval,
+		SWIMProbeInterval:        cfg.SWIMProbeInterval,
+		SWIMPingTimeout:          cfg.SWIMPingTimeout,
+		SWIMPingReqTimeout:       cfg.SWIMPingReqTimeout,
+		SWIMPingReqCount:         cfg.SWIMPingReqCount,
+		SWIMSuspectTimeout:       cfg.SWIMSuspectTimeout,
+		SWIMRetransmitMultiplier: cfg.SWIMRetransmitMultiplier,
+		Logger:                   logger,
 	})
 	if err != nil {
 		return fmt.Errorf("initialize registry application: %w", err)

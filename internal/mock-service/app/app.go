@@ -18,15 +18,15 @@ import (
 )
 
 type Params struct {
-	ServiceName          string
-	InstanceID           string
-	HTTPAddress          string
-	AdvertiseAddress     string
-	ObservabilityAddress string
-	RegistryAddresses    []string
-	Weight               int
-	HeartbeatInterval    time.Duration
-	Logger               *slog.Logger
+	ServiceName              string
+	InstanceID               string
+	HTTPBindAddress          string
+	AdvertiseAddress         string
+	ObservabilityBindAddress string
+	RegistryAddresses        []string
+	Weight                   int
+	HeartbeatInterval        time.Duration
+	Logger                   *slog.Logger
 }
 
 type App struct {
@@ -53,14 +53,14 @@ func New(params Params) (*App, error) {
 	metricsHandler := processMetrics.Handler()
 
 	httpServer := http.NewServer(
-		params.HTTPAddress,
+		params.HTTPBindAddress,
 		params.ServiceName,
 		params.InstanceID,
 		params.Logger,
 	)
 
 	observabilityServer := observability.NewServer(
-		params.ObservabilityAddress,
+		params.ObservabilityBindAddress,
 		metricsHandler,
 		params.Logger,
 	)
@@ -180,11 +180,20 @@ func (a *App) runHeartbeats(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := a.registryClient.Heartbeat(ctx, a.instance); err != nil {
-				if ctx.Err() != nil {
-					return
+			err := a.registryClient.Heartbeat(ctx, a.instance)
+			if ctx.Err() != nil {
+				return
+			}
+
+			switch {
+			case status.Code(err) == codes.NotFound:
+				a.logger.Warn("Service instance not found in registry, registering again")
+
+				if err := a.register(ctx); err != nil && ctx.Err() == nil {
+					a.logger.Error("Failed to register service instance again", "error", err)
 				}
 
+			case err != nil:
 				a.logger.Error("Failed to send heartbeat", "error", err)
 			}
 

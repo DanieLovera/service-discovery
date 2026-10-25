@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	forwardingpb "tpiii.local/daniel-tpiii/gen/forwarding"
+	cppb "tpiii.local/daniel-tpiii/gen/cp"
 	"tpiii.local/daniel-tpiii/internal/registry"
 )
 
@@ -59,7 +59,7 @@ func NewBackend(config Config) *Backend {
 }
 
 func (b *Backend) RegisterGRPC(registrar grpc.ServiceRegistrar) {
-	forwardingpb.RegisterForwardingServer(registrar, &forwardingServer{backend: b})
+	cppb.RegisterForwardingServer(registrar, &forwardingServer{backend: b})
 }
 
 func (b *Backend) Start(ctx context.Context) error {
@@ -83,7 +83,7 @@ func (b *Backend) Start(ctx context.Context) error {
 		return fmt.Errorf("open raft snapshot store: %w", err)
 	}
 
-	advertise, err := net.ResolveTCPAddr("tcp", self.RaftAddress)
+	advertise, err := net.ResolveTCPAddr("tcp", self.PeerAddress)
 	if err != nil {
 		_ = boltStore.Close()
 		return fmt.Errorf("resolve raft advertise address: %w", err)
@@ -138,7 +138,7 @@ func (b *Backend) clusterConfiguration() raft.Configuration {
 	for _, member := range b.config.Members {
 		servers = append(servers, raft.Server{
 			ID:      raft.ServerID(member.ID),
-			Address: raft.ServerAddress(member.RaftAddress),
+			Address: raft.ServerAddress(member.PeerAddress),
 		})
 	}
 

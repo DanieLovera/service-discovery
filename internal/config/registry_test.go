@@ -19,8 +19,8 @@ func TestLoadRegistry(t *testing.T) {
 		t.Errorf("NodeID = %q, want %q", cfg.NodeID, "registry-1")
 	}
 
-	if cfg.ObservabilityAddress != defaultRegistryObservabilityAddress {
-		t.Errorf("ObservabilityAddress = %q, want %q", cfg.ObservabilityAddress, defaultRegistryObservabilityAddress)
+	if cfg.ObservabilityBindAddress != defaultRegistryObservabilityBindAddress {
+		t.Errorf("ObservabilityBindAddress = %q, want %q", cfg.ObservabilityBindAddress, defaultRegistryObservabilityBindAddress)
 	}
 
 	if len(cfg.ClusterMembers) != 2 {

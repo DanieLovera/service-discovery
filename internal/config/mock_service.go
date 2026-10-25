@@ -17,15 +17,15 @@ const (
 )
 
 type MockService struct {
-	ServiceName          string
-	InstanceID           string
-	HTTPAddress          string
-	AdvertiseAddress     string
-	ObservabilityAddress string
-	RegistryAddresses    []string
-	Weight               int
-	HeartbeatInterval    time.Duration
-	Log                  logging.Config
+	ServiceName              string
+	InstanceID               string
+	HTTPBindAddress          string
+	AdvertiseAddress         string
+	ObservabilityBindAddress string
+	RegistryAddresses        []string
+	Weight                   int
+	HeartbeatInterval        time.Duration
+	Log                      logging.Config
 }
 
 func LoadMockService() (MockService, error) {
@@ -40,14 +40,14 @@ func LoadMockService() (MockService, error) {
 	}
 
 	cfg := MockService{
-		ServiceName:          strings.TrimSpace(os.Getenv("NAME")),
-		InstanceID:           strings.TrimSpace(os.Getenv("INSTANCE_ID")),
-		HTTPAddress:          stringFromEnvOrDefault("HTTP_ADDRESS", defaultMockHTTPAddress),
-		AdvertiseAddress:     strings.TrimSpace(os.Getenv("ADVERTISE_ADDRESS")),
-		ObservabilityAddress: stringFromEnvOrDefault("OBSERVABILITY_ADDRESS", defaultMockObservabilityAddress),
-		RegistryAddresses:    splitCSV(os.Getenv("REGISTRY_ADDRESSES")),
-		Weight:               weight,
-		HeartbeatInterval:    interval,
+		ServiceName:              strings.TrimSpace(os.Getenv("NAME")),
+		InstanceID:               strings.TrimSpace(os.Getenv("INSTANCE_ID")),
+		HTTPBindAddress:          stringFromEnvOrDefault("HTTP_BIND_ADDRESS", defaultMockHTTPBindAddress),
+		AdvertiseAddress:         strings.TrimSpace(os.Getenv("ADVERTISE_ADDRESS")),
+		ObservabilityBindAddress: stringFromEnvOrDefault("OBSERVABILITY_BIND_ADDRESS", defaultMockObservabilityBindAddress),
+		RegistryAddresses:        splitCSV(os.Getenv("REGISTRY_ADDRESSES")),
+		Weight:                   weight,
+		HeartbeatInterval:        interval,
 		Log: logging.Config{
 			Level:  stringFromEnvOrDefault("LOG_LEVEL", "info"),
 			Format: stringFromEnvOrDefault("LOG_FORMAT", "json"),

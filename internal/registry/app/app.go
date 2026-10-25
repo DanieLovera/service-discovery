@@ -19,17 +19,25 @@ import (
 )
 
 type Params struct {
-	NodeID               string
-	Backend              string
-	GRPCAddress          string
-	ObservabilityAddress string
-	ClusterMembers       []registry.ClusterMember
-	TTLMultiplier        int
-	RaftBindAddress      string
-	RaftDataDir          string
-	ForwardTimeout       time.Duration
-	ForwardMaxAttempts   int
-	Logger               *slog.Logger
+	NodeID                   string
+	Backend                  string
+	GRPCBindAddress          string
+	ObservabilityBindAddress string
+	ClusterMembers           []registry.ClusterMember
+	TTLMultiplier            int
+	PeerBindAddress          string
+	RaftDataDir              string
+	ForwardTimeout           time.Duration
+	ForwardMaxAttempts       int
+	GossipFanout             int
+	AntiEntropyInterval      time.Duration
+	SWIMProbeInterval        time.Duration
+	SWIMPingTimeout          time.Duration
+	SWIMPingReqTimeout       time.Duration
+	SWIMPingReqCount         int
+	SWIMSuspectTimeout       time.Duration
+	SWIMRetransmitMultiplier int
+	Logger                   *slog.Logger
 }
 
 type grpcRegistrar interface {
@@ -59,12 +67,12 @@ func New(params Params) (*App, error) {
 		registrations = append(registrations, registrar.RegisterGRPC)
 	}
 
-	grpcServer := grpc.NewServer(params.GRPCAddress, grpcHandler, params.Logger, registrations...)
+	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, params.Logger, registrations...)
 
 	processMetrics := metrics.New("registry", params.NodeID)
 	metricsHandler := processMetrics.Handler()
 	observabilityServer := observability.NewServer(
-		params.ObservabilityAddress,
+		params.ObservabilityBindAddress,
 		metricsHandler,
 		params.Logger,
 	)
@@ -146,14 +154,29 @@ func newBackend(params Params) (registry.Backend, error) {
 	case "cp":
 		return cp.NewBackend(cp.Config{
 			NodeID:             params.NodeID,
-			BindAddress:        params.RaftBindAddress,
+			BindAddress:        params.PeerBindAddress,
 			DataDir:            params.RaftDataDir,
 			Members:            params.ClusterMembers,
 			ForwardTimeout:     params.ForwardTimeout,
 			ForwardMaxAttempts: params.ForwardMaxAttempts,
 		}), nil
 	case "ap":
-		return ap.NewBackend(), nil
+		return ap.NewBackend(ap.Config{
+			NodeID:              params.NodeID,
+			BindAddress:         params.PeerBindAddress,
+			Members:             params.ClusterMembers,
+			GossipFanout:        params.GossipFanout,
+			AntiEntropyInterval: params.AntiEntropyInterval,
+			SWIM: ap.SWIMConfig{
+				ProbeInterval:        params.SWIMProbeInterval,
+				PingTimeout:          params.SWIMPingTimeout,
+				PingReqTimeout:       params.SWIMPingReqTimeout,
+				PingReqCount:         params.SWIMPingReqCount,
+				SuspectTimeout:       params.SWIMSuspectTimeout,
+				RetransmitMultiplier: params.SWIMRetransmitMultiplier,
+			},
+			Logger: params.Logger,
+		}), nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
 	}

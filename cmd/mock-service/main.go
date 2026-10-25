@@ -42,15 +42,15 @@ func start() (err error) {
 	defer stop()
 
 	application, err := app.New(app.Params{
-		ServiceName:          cfg.ServiceName,
-		InstanceID:           cfg.InstanceID,
-		HTTPAddress:          cfg.HTTPAddress,
-		AdvertiseAddress:     cfg.AdvertiseAddress,
-		ObservabilityAddress: cfg.ObservabilityAddress,
-		RegistryAddresses:    cfg.RegistryAddresses,
-		Weight:               cfg.Weight,
-		HeartbeatInterval:    cfg.HeartbeatInterval,
-		Logger:               logger,
+		ServiceName:              cfg.ServiceName,
+		InstanceID:               cfg.InstanceID,
+		HTTPBindAddress:          cfg.HTTPBindAddress,
+		AdvertiseAddress:         cfg.AdvertiseAddress,
+		ObservabilityBindAddress: cfg.ObservabilityBindAddress,
+		RegistryAddresses:        cfg.RegistryAddresses,
+		Weight:                   cfg.Weight,
+		HeartbeatInterval:        cfg.HeartbeatInterval,
+		Logger:                   logger,
 	})
 	if err != nil {
 		return fmt.Errorf("initialize mock service application: %w", err)

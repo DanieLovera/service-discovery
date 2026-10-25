@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package ap;
+
+option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
+
+message Ping {
+  uint64 probe_id = 1;
+  repeated MembershipUpdate membership_updates = 2;
+}
+
+message Ack {
+  uint64 probe_id = 1;
+  string responder_id = 2;
+  repeated MembershipUpdate membership_updates = 3;
+}
+
+message PingReq {
+  uint64 probe_id = 1;
+  string target_node_id = 2;
+  repeated MembershipUpdate membership_updates = 3;
+}
+
+message MembershipUpdate {
+  MembershipUpdateType type = 1;
+  string node_id = 2;
+  uint64 incarnation = 3;
+}
+
+enum MembershipUpdateType {
+  MEMBERSHIP_UPDATE_TYPE_UNSPECIFIED = 0;
+  MEMBERSHIP_UPDATE_TYPE_ALIVE = 1;
+  MEMBERSHIP_UPDATE_TYPE_SUSPECT = 2;
+  MEMBERSHIP_UPDATE_TYPE_CONFIRM = 3;
+}

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package ap;
+
+import "proto/ap/state.proto";
+
+option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
+
+service AntiEntropy {
+  rpc Compare(Digest) returns (Diff);
+  rpc Merge(StateTransfer) returns (MergeResponse);
+}
+
+message Digest {
+  string sender_id = 1;
+  repeated DigestEntry entries = 2;
+}
+
+message DigestEntry {
+  string service_name = 1;
+  string instance_id = 2;
+  Version version = 3;
+}
+
+message Diff {
+  string sender_id = 1;
+  repeated InstanceState states = 2;
+  repeated InstanceKey requested_instances = 3;
+}
+
+message StateTransfer {
+  string sender_id = 1;
+  repeated InstanceState states = 2;
+}
+
+message MergeResponse {}

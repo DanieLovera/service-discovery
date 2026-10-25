@@ -18,8 +18,8 @@ import (
 )
 
 type Params struct {
-	HTTPAddress              string
-	ObservabilityAddress     string
+	HTTPBindAddress          string
+	ObservabilityBindAddress string
 	RegistryAddresses        []string
 	RegistryRetryInterval    time.Duration
 	RegistryKeepaliveTime    time.Duration
@@ -61,11 +61,11 @@ func New(params Params) (*App, error) {
 		params.Logger,
 	)
 
-	httpServer := http.NewServer(params.HTTPAddress, routing.NewManager(upstreams), params.Logger)
+	httpServer := http.NewServer(params.HTTPBindAddress, routing.NewManager(upstreams), params.Logger)
 
 	processMetrics := metrics.New("load-balancer", "load-balancer")
 	observabilityServer := observability.NewServer(
-		params.ObservabilityAddress,
+		params.ObservabilityBindAddress,
 		processMetrics.Handler(),
 		params.Logger,
 	)
