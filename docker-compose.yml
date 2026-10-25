@@ -63,8 +63,6 @@ x-registry: &registry
       SERVICE: registry
 
 x-mock-service-environment: &mock-service-environment
-  # Service name the instance registers under
-  NAME: mock-service
   # Registry Nodes that receive Register and heartbeats. If one fails the next one is tried
   REGISTRY_ADDRESSES: *registry-addresses
   # HTTP listen address for requests coming from the load balancer
@@ -136,7 +134,7 @@ services:
       # Registry Nodes used for Watch. gRPC spreads the connections across them (round-robin)
       REGISTRY_ADDRESSES: *registry-addresses
       # Services to balance: comma-separated service:strategy (round-robin, least-connections, weighted)
-      SERVICES: mock-service:round-robin
+      SERVICES: service-a:round-robin,service-b:least-connections,service-c:weighted
       # HTTP listen address: /{service}/... is routed to an instance of that service
       HTTP_BIND_ADDRESS: 0.0.0.0:8000
       # Observability listen address: /metrics, /healthz and /readyz
@@ -152,28 +150,83 @@ services:
       - "10010:10010"
     depends_on: *registry-dependencies
 
-  mock-service-1:
+  service-a-1:
     <<: *mock-service
     environment:
       <<: *mock-service-environment
+      # Service name the instance registers under
+      NAME: service-a
       # Instance id within the service
-      INSTANCE_ID: mock-service-1
+      INSTANCE_ID: service-a-1
       # Address published in the registry, used by the load balancer to reach the instance
-      ADVERTISE_ADDRESS: mock-service-1:9000
+      ADVERTISE_ADDRESS: service-a-1:9000
 
-  mock-service-2:
+  service-a-2:
     <<: *mock-service
     environment:
       <<: *mock-service-environment
-      INSTANCE_ID: mock-service-2
-      ADVERTISE_ADDRESS: mock-service-2:9000
+      NAME: service-a
+      INSTANCE_ID: service-a-2
+      ADVERTISE_ADDRESS: service-a-2:9000
 
-  mock-service-3:
+  service-a-3:
     <<: *mock-service
     environment:
       <<: *mock-service-environment
-      INSTANCE_ID: mock-service-3
-      ADVERTISE_ADDRESS: mock-service-3:9000
+      NAME: service-a
+      INSTANCE_ID: service-a-3
+      ADVERTISE_ADDRESS: service-a-3:9000
+
+  service-b-1:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-b
+      INSTANCE_ID: service-b-1
+      ADVERTISE_ADDRESS: service-b-1:9000
+
+  service-b-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-b
+      INSTANCE_ID: service-b-2
+      ADVERTISE_ADDRESS: service-b-2:9000
+
+  service-b-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-b
+      INSTANCE_ID: service-b-3
+      ADVERTISE_ADDRESS: service-b-3:9000
+
+  service-c-1:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-c
+      INSTANCE_ID: service-c-1
+      ADVERTISE_ADDRESS: service-c-1:9000
+      WEIGHT: 1
+
+  service-c-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-c
+      INSTANCE_ID: service-c-2
+      ADVERTISE_ADDRESS: service-c-2:9000
+      WEIGHT: 2
+
+  service-c-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-c
+      INSTANCE_ID: service-c-3
+      ADVERTISE_ADDRESS: service-c-3:9000
+      WEIGHT: 3
 
   dozzle:
     image: amir20/dozzle:latest
@@ -200,9 +253,15 @@ services:
       - "8083:9090"
     depends_on:
       - load-balancer
-      - mock-service-1
-      - mock-service-2
-      - mock-service-3
+      - service-a-1
+      - service-a-2
+      - service-a-3
+      - service-b-1
+      - service-b-2
+      - service-b-3
+      - service-c-1
+      - service-c-2
+      - service-c-3
 
 volumes:
   registry-1-data:

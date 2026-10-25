@@ -19,6 +19,12 @@ scrape_configs:
   - job_name: mock-service
     static_configs:
       - targets:
-          - mock-service-1:10020
-          - mock-service-2:10020
-          - mock-service-3:10020
+          - service-a-1:10020
+          - service-a-2:10020
+          - service-a-3:10020
+          - service-b-1:10020
+          - service-b-2:10020
+          - service-b-3:10020
+          - service-c-1:10020
+          - service-c-2:10020
+          - service-c-3:10020
