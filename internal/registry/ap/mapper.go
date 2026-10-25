@@ -130,3 +130,60 @@ func statusFromProto(value appb.InstanceStatus) (registry.ServiceInstanceStatus,
 		return "", fmt.Errorf("unknown instance status %v", value)
 	}
 }
+
+func membershipUpdatesToProto(updates []membershipUpdate) []*appb.MembershipUpdate {
+	protoUpdates := make([]*appb.MembershipUpdate, 0, len(updates))
+	for _, update := range updates {
+		protoUpdates = append(protoUpdates, &appb.MembershipUpdate{
+			Type:        memberStatusToProto(update.Status),
+			NodeId:      update.NodeID,
+			Incarnation: update.Incarnation,
+		})
+	}
+
+	return protoUpdates
+}
+
+func membershipUpdatesFromProto(protoUpdates []*appb.MembershipUpdate) []membershipUpdate {
+	updates := make([]membershipUpdate, 0, len(protoUpdates))
+	for _, protoUpdate := range protoUpdates {
+		status, ok := memberStatusFromProto(protoUpdate.GetType())
+		if !ok {
+			continue
+		}
+
+		updates = append(updates, membershipUpdate{
+			Status:      status,
+			NodeID:      protoUpdate.GetNodeId(),
+			Incarnation: protoUpdate.GetIncarnation(),
+		})
+	}
+
+	return updates
+}
+
+func memberStatusToProto(value memberStatus) appb.MembershipUpdateType {
+	switch value {
+	case memberAlive:
+		return appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_ALIVE
+	case memberSuspect:
+		return appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_SUSPECT
+	case memberConfirmed:
+		return appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_CONFIRM
+	default:
+		return appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_UNSPECIFIED
+	}
+}
+
+func memberStatusFromProto(value appb.MembershipUpdateType) (memberStatus, bool) {
+	switch value {
+	case appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_ALIVE:
+		return memberAlive, true
+	case appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_SUSPECT:
+		return memberSuspect, true
+	case appb.MembershipUpdateType_MEMBERSHIP_UPDATE_TYPE_CONFIRM:
+		return memberConfirmed, true
+	default:
+		return "", false
+	}
+}

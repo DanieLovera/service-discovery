@@ -41,6 +41,19 @@ x-registry-environment: &registry-environment
   GOSSIP_FANOUT: 3
   # Time between anti-entropy rounds, also the timeout of each round (AP)
   ANTI_ENTROPY_INTERVAL: 5s
+  # SWIM protocol period: one peer is probed per period (AP)
+  SWIM_PROBE_INTERVAL: 1s
+  # Maximum wait for the ACK to a direct PING (AP)
+  SWIM_PING_TIMEOUT: 300ms
+  # Maximum wait for an indirect ACK after sending PING_REQs (AP)
+  # Added to SWIM_PING_TIMEOUT it must not exceed SWIM_PROBE_INTERVAL
+  SWIM_PING_REQ_TIMEOUT: 600ms
+  # Number of intermediary nodes that receive a PING_REQ (AP)
+  SWIM_PING_REQ_COUNT: 2
+  # Time a node stays SUSPECT before becoming CONFIRM (AP)
+  SWIM_SUSPECT_TIMEOUT: 5s
+  # λ in λ·⌈log10(N+1)⌉: number of times each membership update is retransmitted (AP)
+  SWIM_RETRANSMIT_MULTIPLIER: 4
 
 x-registry: &registry
   image: daanilo/registry:dev

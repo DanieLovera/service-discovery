@@ -8,7 +8,7 @@ option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
 
 service AntiEntropy {
   rpc Compare(Digest) returns (Diff);
-  rpc Transfer(StateTransfer) returns (StateTransferResponse);
+  rpc Merge(StateTransfer) returns (MergeResponse);
 }
 
 message Digest {
@@ -33,4 +33,4 @@ message StateTransfer {
   repeated InstanceState states = 2;
 }
 
-message StateTransferResponse {}
+message MergeResponse {}

@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AntiEntropy_Compare_FullMethodName  = "/ap.AntiEntropy/Compare"
-	AntiEntropy_Transfer_FullMethodName = "/ap.AntiEntropy/Transfer"
+	AntiEntropy_Compare_FullMethodName = "/ap.AntiEntropy/Compare"
+	AntiEntropy_Merge_FullMethodName   = "/ap.AntiEntropy/Merge"
 )
 
 // AntiEntropyClient is the client API for AntiEntropy service.
@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AntiEntropyClient interface {
 	Compare(ctx context.Context, in *Digest, opts ...grpc.CallOption) (*Diff, error)
-	Transfer(ctx context.Context, in *StateTransfer, opts ...grpc.CallOption) (*StateTransferResponse, error)
+	Merge(ctx context.Context, in *StateTransfer, opts ...grpc.CallOption) (*MergeResponse, error)
 }
 
 type antiEntropyClient struct {
@@ -49,10 +49,10 @@ func (c *antiEntropyClient) Compare(ctx context.Context, in *Digest, opts ...grp
 	return out, nil
 }
 
-func (c *antiEntropyClient) Transfer(ctx context.Context, in *StateTransfer, opts ...grpc.CallOption) (*StateTransferResponse, error) {
+func (c *antiEntropyClient) Merge(ctx context.Context, in *StateTransfer, opts ...grpc.CallOption) (*MergeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StateTransferResponse)
-	err := c.cc.Invoke(ctx, AntiEntropy_Transfer_FullMethodName, in, out, cOpts...)
+	out := new(MergeResponse)
+	err := c.cc.Invoke(ctx, AntiEntropy_Merge_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *antiEntropyClient) Transfer(ctx context.Context, in *StateTransfer, opt
 // for forward compatibility.
 type AntiEntropyServer interface {
 	Compare(context.Context, *Digest) (*Diff, error)
-	Transfer(context.Context, *StateTransfer) (*StateTransferResponse, error)
+	Merge(context.Context, *StateTransfer) (*MergeResponse, error)
 	mustEmbedUnimplementedAntiEntropyServer()
 }
 
@@ -78,8 +78,8 @@ type UnimplementedAntiEntropyServer struct{}
 func (UnimplementedAntiEntropyServer) Compare(context.Context, *Digest) (*Diff, error) {
 	return nil, status.Error(codes.Unimplemented, "method Compare not implemented")
 }
-func (UnimplementedAntiEntropyServer) Transfer(context.Context, *StateTransfer) (*StateTransferResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Transfer not implemented")
+func (UnimplementedAntiEntropyServer) Merge(context.Context, *StateTransfer) (*MergeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Merge not implemented")
 }
 func (UnimplementedAntiEntropyServer) mustEmbedUnimplementedAntiEntropyServer() {}
 func (UnimplementedAntiEntropyServer) testEmbeddedByValue()                     {}
@@ -120,20 +120,20 @@ func _AntiEntropy_Compare_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AntiEntropy_Transfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AntiEntropy_Merge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StateTransfer)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AntiEntropyServer).Transfer(ctx, in)
+		return srv.(AntiEntropyServer).Merge(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AntiEntropy_Transfer_FullMethodName,
+		FullMethod: AntiEntropy_Merge_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AntiEntropyServer).Transfer(ctx, req.(*StateTransfer))
+		return srv.(AntiEntropyServer).Merge(ctx, req.(*StateTransfer))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -150,8 +150,8 @@ var AntiEntropy_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AntiEntropy_Compare_Handler,
 		},
 		{
-			MethodName: "Transfer",
-			Handler:    _AntiEntropy_Transfer_Handler,
+			MethodName: "Merge",
+			Handler:    _AntiEntropy_Merge_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

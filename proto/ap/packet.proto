@@ -3,6 +3,7 @@ syntax = "proto3";
 package ap;
 
 import "proto/ap/state.proto";
+import "proto/ap/swim.proto";
 
 option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
 
@@ -11,5 +12,8 @@ message Packet {
 
   oneof payload {
     StateUpdate state_update = 2;
+    Ping ping = 3;
+    Ack ack = 4;
+    PingReq ping_req = 5;
   }
 }

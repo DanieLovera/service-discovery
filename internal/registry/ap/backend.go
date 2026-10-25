@@ -23,6 +23,7 @@ type Config struct {
 	Members             []registry.ClusterMember
 	GossipFanout        int
 	AntiEntropyInterval time.Duration
+	SWIM                SWIMConfig
 	Logger              *slog.Logger
 }
 
@@ -31,6 +32,7 @@ type Backend struct {
 	transport  *udpTransport
 	gossiper   *gossiper
 	reconciler *reconciler
+	detector   *failureDetector
 
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
@@ -43,12 +45,20 @@ func NewBackend(config Config) *Backend {
 
 	store := newStateStore(config.NodeID)
 	transport := newUDPTransport(config.BindAddress, config.Logger)
+	membership := newMembership(
+		config.NodeID,
+		peers,
+		config.SWIM.SuspectTimeout,
+		config.SWIM.RetransmitMultiplier,
+		config.Logger,
+	)
 
 	return &Backend{
 		store:      store,
 		transport:  transport,
-		gossiper:   newGossiper(config.NodeID, peers, config.GossipFanout, store, transport, config.Logger),
-		reconciler: newReconciler(config.NodeID, peers, config.AntiEntropyInterval, store, config.Logger),
+		gossiper:   newGossiper(config.NodeID, membership, config.GossipFanout, store, transport, config.Logger),
+		reconciler: newReconciler(config.NodeID, membership, config.AntiEntropyInterval, store, config.Logger),
+		detector:   newFailureDetector(config.NodeID, peers, config.SWIM, membership, transport, config.Logger),
 	}
 }
 
@@ -66,6 +76,9 @@ func (b *Backend) Start(ctx context.Context) error {
 	ctx, b.cancel = context.WithCancel(ctx)
 	b.wg.Go(func() {
 		b.reconciler.run(ctx)
+	})
+	b.wg.Go(func() {
+		b.detector.run(ctx)
 	})
 
 	return nil
@@ -123,5 +136,11 @@ func (b *Backend) handle(packet *appb.Packet) {
 	switch payload := packet.GetPayload().(type) {
 	case *appb.Packet_StateUpdate:
 		b.gossiper.receive(packet.GetSenderId(), payload.StateUpdate)
+	case *appb.Packet_Ping:
+		b.detector.handlePing(packet.GetSenderId(), payload.Ping)
+	case *appb.Packet_PingReq:
+		b.detector.handlePingReq(packet.GetSenderId(), payload.PingReq)
+	case *appb.Packet_Ack:
+		b.detector.handleAck(payload.Ack)
 	}
 }

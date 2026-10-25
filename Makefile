@@ -33,6 +33,7 @@ proto:
 		proto/registry.proto \
 		proto/forwarding.proto \
 		proto/ap/state.proto \
+		proto/ap/swim.proto \
 		proto/ap/anti_entropy.proto \
 		proto/ap/packet.proto
 

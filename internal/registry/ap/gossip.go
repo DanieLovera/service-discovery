@@ -2,7 +2,6 @@ package ap
 
 import (
 	"log/slog"
-	"math/rand/v2"
 	"slices"
 
 	appb "tpiii.local/daniel-tpiii/gen/ap"
@@ -10,29 +9,29 @@ import (
 )
 
 type gossiper struct {
-	nodeID    string
-	peers     []registry.ClusterMember
-	fanout    int
-	store     *stateStore
-	transport *udpTransport
-	logger    *slog.Logger
+	nodeID     string
+	membership *membership
+	fanout     int
+	store      *stateStore
+	transport  *udpTransport
+	logger     *slog.Logger
 }
 
 func newGossiper(
 	nodeID string,
-	peers []registry.ClusterMember,
+	membership *membership,
 	fanout int,
 	store *stateStore,
 	transport *udpTransport,
 	logger *slog.Logger,
 ) *gossiper {
 	return &gossiper{
-		nodeID:    nodeID,
-		peers:     peers,
-		fanout:    fanout,
-		store:     store,
-		transport: transport,
-		logger:    logger,
+		nodeID:     nodeID,
+		membership: membership,
+		fanout:     fanout,
+		store:      store,
+		transport:  transport,
+		logger:     logger,
 	}
 }
 
@@ -68,13 +67,11 @@ func (g *gossiper) receive(senderID string, update *appb.StateUpdate) {
 }
 
 func (g *gossiper) targets(exclude string) []registry.ClusterMember {
-	candidates := slices.DeleteFunc(slices.Clone(g.peers), func(peer registry.ClusterMember) bool {
+	candidates := slices.DeleteFunc(g.membership.alivePeers(), func(peer registry.ClusterMember) bool {
 		return peer.ID == exclude
 	})
 
-	rand.Shuffle(len(candidates), func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
-	})
+	shuffle(candidates)
 
 	return candidates[:min(g.fanout, len(candidates))]
 }

@@ -27,6 +27,9 @@ type Packet struct {
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*Packet_StateUpdate
+	//	*Packet_Ping
+	//	*Packet_Ack
+	//	*Packet_PingReq
 	Payload       isPacket_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -85,6 +88,33 @@ func (x *Packet) GetStateUpdate() *StateUpdate {
 	return nil
 }
 
+func (x *Packet) GetPing() *Ping {
+	if x != nil {
+		if x, ok := x.Payload.(*Packet_Ping); ok {
+			return x.Ping
+		}
+	}
+	return nil
+}
+
+func (x *Packet) GetAck() *Ack {
+	if x != nil {
+		if x, ok := x.Payload.(*Packet_Ack); ok {
+			return x.Ack
+		}
+	}
+	return nil
+}
+
+func (x *Packet) GetPingReq() *PingReq {
+	if x != nil {
+		if x, ok := x.Payload.(*Packet_PingReq); ok {
+			return x.PingReq
+		}
+	}
+	return nil
+}
+
 type isPacket_Payload interface {
 	isPacket_Payload()
 }
@@ -93,16 +123,37 @@ type Packet_StateUpdate struct {
 	StateUpdate *StateUpdate `protobuf:"bytes,2,opt,name=state_update,json=stateUpdate,proto3,oneof"`
 }
 
+type Packet_Ping struct {
+	Ping *Ping `protobuf:"bytes,3,opt,name=ping,proto3,oneof"`
+}
+
+type Packet_Ack struct {
+	Ack *Ack `protobuf:"bytes,4,opt,name=ack,proto3,oneof"`
+}
+
+type Packet_PingReq struct {
+	PingReq *PingReq `protobuf:"bytes,5,opt,name=ping_req,json=pingReq,proto3,oneof"`
+}
+
 func (*Packet_StateUpdate) isPacket_Payload() {}
+
+func (*Packet_Ping) isPacket_Payload() {}
+
+func (*Packet_Ack) isPacket_Payload() {}
+
+func (*Packet_PingReq) isPacket_Payload() {}
 
 var File_proto_ap_packet_proto protoreflect.FileDescriptor
 
 const file_proto_ap_packet_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/ap/packet.proto\x12\x02ap\x1a\x14proto/ap/state.proto\"f\n" +
+	"\x15proto/ap/packet.proto\x12\x02ap\x1a\x14proto/ap/state.proto\x1a\x13proto/ap/swim.proto\"\xcd\x01\n" +
 	"\x06Packet\x12\x1b\n" +
 	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x124\n" +
-	"\fstate_update\x18\x02 \x01(\v2\x0f.ap.StateUpdateH\x00R\vstateUpdateB\t\n" +
+	"\fstate_update\x18\x02 \x01(\v2\x0f.ap.StateUpdateH\x00R\vstateUpdate\x12\x1e\n" +
+	"\x04ping\x18\x03 \x01(\v2\b.ap.PingH\x00R\x04ping\x12\x1b\n" +
+	"\x03ack\x18\x04 \x01(\v2\a.ap.AckH\x00R\x03ack\x12(\n" +
+	"\bping_req\x18\x05 \x01(\v2\v.ap.PingReqH\x00R\apingReqB\t\n" +
 	"\apayloadB&Z$tpiii.local/daniel-tpiii/gen/ap;appbb\x06proto3"
 
 var (
@@ -121,14 +172,20 @@ var file_proto_ap_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_proto_ap_packet_proto_goTypes = []any{
 	(*Packet)(nil),      // 0: ap.Packet
 	(*StateUpdate)(nil), // 1: ap.StateUpdate
+	(*Ping)(nil),        // 2: ap.Ping
+	(*Ack)(nil),         // 3: ap.Ack
+	(*PingReq)(nil),     // 4: ap.PingReq
 }
 var file_proto_ap_packet_proto_depIdxs = []int32{
 	1, // 0: ap.Packet.state_update:type_name -> ap.StateUpdate
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 1: ap.Packet.ping:type_name -> ap.Ping
+	3, // 2: ap.Packet.ack:type_name -> ap.Ack
+	4, // 3: ap.Packet.ping_req:type_name -> ap.PingReq
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_proto_ap_packet_proto_init() }
@@ -137,8 +194,12 @@ func file_proto_ap_packet_proto_init() {
 		return
 	}
 	file_proto_ap_state_proto_init()
+	file_proto_ap_swim_proto_init()
 	file_proto_ap_packet_proto_msgTypes[0].OneofWrappers = []any{
 		(*Packet_StateUpdate)(nil),
+		(*Packet_Ping)(nil),
+		(*Packet_Ack)(nil),
+		(*Packet_PingReq)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

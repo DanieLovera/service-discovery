@@ -50,6 +50,12 @@ func start() (err error) {
 		ForwardMaxAttempts:       cfg.ForwardMaxAttempts,
 		GossipFanout:             cfg.GossipFanout,
 		AntiEntropyInterval:      cfg.AntiEntropyInterval,
+		SWIMProbeInterval:        cfg.SWIMProbeInterval,
+		SWIMPingTimeout:          cfg.SWIMPingTimeout,
+		SWIMPingReqTimeout:       cfg.SWIMPingReqTimeout,
+		SWIMPingReqCount:         cfg.SWIMPingReqCount,
+		SWIMSuspectTimeout:       cfg.SWIMSuspectTimeout,
+		SWIMRetransmitMultiplier: cfg.SWIMRetransmitMultiplier,
 		Logger:                   logger,
 	})
 	if err != nil {

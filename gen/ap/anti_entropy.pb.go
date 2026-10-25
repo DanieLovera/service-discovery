@@ -245,26 +245,26 @@ func (x *StateTransfer) GetStates() []*InstanceState {
 	return nil
 }
 
-type StateTransferResponse struct {
+type MergeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StateTransferResponse) Reset() {
-	*x = StateTransferResponse{}
+func (x *MergeResponse) Reset() {
+	*x = MergeResponse{}
 	mi := &file_proto_ap_anti_entropy_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StateTransferResponse) String() string {
+func (x *MergeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StateTransferResponse) ProtoMessage() {}
+func (*MergeResponse) ProtoMessage() {}
 
-func (x *StateTransferResponse) ProtoReflect() protoreflect.Message {
+func (x *MergeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_ap_anti_entropy_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -276,8 +276,8 @@ func (x *StateTransferResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StateTransferResponse.ProtoReflect.Descriptor instead.
-func (*StateTransferResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use MergeResponse.ProtoReflect.Descriptor instead.
+func (*MergeResponse) Descriptor() ([]byte, []int) {
 	return file_proto_ap_anti_entropy_proto_rawDescGZIP(), []int{4}
 }
 
@@ -300,12 +300,12 @@ const file_proto_ap_anti_entropy_proto_rawDesc = "" +
 	"\x13requested_instances\x18\x03 \x03(\v2\x0f.ap.InstanceKeyR\x12requestedInstances\"W\n" +
 	"\rStateTransfer\x12\x1b\n" +
 	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x12)\n" +
-	"\x06states\x18\x02 \x03(\v2\x11.ap.InstanceStateR\x06states\"\x17\n" +
-	"\x15StateTransferResponse2h\n" +
+	"\x06states\x18\x02 \x03(\v2\x11.ap.InstanceStateR\x06states\"\x0f\n" +
+	"\rMergeResponse2]\n" +
 	"\vAntiEntropy\x12\x1f\n" +
 	"\aCompare\x12\n" +
-	".ap.Digest\x1a\b.ap.Diff\x128\n" +
-	"\bTransfer\x12\x11.ap.StateTransfer\x1a\x19.ap.StateTransferResponseB&Z$tpiii.local/daniel-tpiii/gen/ap;appbb\x06proto3"
+	".ap.Digest\x1a\b.ap.Diff\x12-\n" +
+	"\x05Merge\x12\x11.ap.StateTransfer\x1a\x11.ap.MergeResponseB&Z$tpiii.local/daniel-tpiii/gen/ap;appbb\x06proto3"
 
 var (
 	file_proto_ap_anti_entropy_proto_rawDescOnce sync.Once
@@ -321,14 +321,14 @@ func file_proto_ap_anti_entropy_proto_rawDescGZIP() []byte {
 
 var file_proto_ap_anti_entropy_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_ap_anti_entropy_proto_goTypes = []any{
-	(*Digest)(nil),                // 0: ap.Digest
-	(*DigestEntry)(nil),           // 1: ap.DigestEntry
-	(*Diff)(nil),                  // 2: ap.Diff
-	(*StateTransfer)(nil),         // 3: ap.StateTransfer
-	(*StateTransferResponse)(nil), // 4: ap.StateTransferResponse
-	(*Version)(nil),               // 5: ap.Version
-	(*InstanceState)(nil),         // 6: ap.InstanceState
-	(*InstanceKey)(nil),           // 7: ap.InstanceKey
+	(*Digest)(nil),        // 0: ap.Digest
+	(*DigestEntry)(nil),   // 1: ap.DigestEntry
+	(*Diff)(nil),          // 2: ap.Diff
+	(*StateTransfer)(nil), // 3: ap.StateTransfer
+	(*MergeResponse)(nil), // 4: ap.MergeResponse
+	(*Version)(nil),       // 5: ap.Version
+	(*InstanceState)(nil), // 6: ap.InstanceState
+	(*InstanceKey)(nil),   // 7: ap.InstanceKey
 }
 var file_proto_ap_anti_entropy_proto_depIdxs = []int32{
 	1, // 0: ap.Digest.entries:type_name -> ap.DigestEntry
@@ -337,9 +337,9 @@ var file_proto_ap_anti_entropy_proto_depIdxs = []int32{
 	7, // 3: ap.Diff.requested_instances:type_name -> ap.InstanceKey
 	6, // 4: ap.StateTransfer.states:type_name -> ap.InstanceState
 	0, // 5: ap.AntiEntropy.Compare:input_type -> ap.Digest
-	3, // 6: ap.AntiEntropy.Transfer:input_type -> ap.StateTransfer
+	3, // 6: ap.AntiEntropy.Merge:input_type -> ap.StateTransfer
 	2, // 7: ap.AntiEntropy.Compare:output_type -> ap.Diff
-	4, // 8: ap.AntiEntropy.Transfer:output_type -> ap.StateTransferResponse
+	4, // 8: ap.AntiEntropy.Merge:output_type -> ap.MergeResponse
 	7, // [7:9] is the sub-list for method output_type
 	5, // [5:7] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name

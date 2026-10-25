@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
-	"slices"
 	"sync"
 	"time"
 
@@ -18,11 +17,11 @@ import (
 )
 
 type reconciler struct {
-	nodeID   string
-	peers    []registry.ClusterMember
-	interval time.Duration
-	store    *stateStore
-	logger   *slog.Logger
+	nodeID     string
+	membership *membership
+	interval   time.Duration
+	store      *stateStore
+	logger     *slog.Logger
 
 	mu    sync.Mutex
 	conns map[string]*grpc.ClientConn
@@ -30,26 +29,24 @@ type reconciler struct {
 
 func newReconciler(
 	nodeID string,
-	peers []registry.ClusterMember,
+	membership *membership,
 	interval time.Duration,
 	store *stateStore,
 	logger *slog.Logger,
 ) *reconciler {
 	return &reconciler{
-		nodeID:   nodeID,
-		peers:    peers,
-		interval: interval,
-		store:    store,
-		logger:   logger,
-		conns:    make(map[string]*grpc.ClientConn),
+		nodeID:     nodeID,
+		membership: membership,
+		interval:   interval,
+		store:      store,
+		logger:     logger,
+		conns:      make(map[string]*grpc.ClientConn),
 	}
 }
 
 func (r *reconciler) initialSync(ctx context.Context) {
-	peers := slices.Clone(r.peers)
-	rand.Shuffle(len(peers), func(i, j int) {
-		peers[i], peers[j] = peers[j], peers[i]
-	})
+	peers := r.membership.alivePeers()
+	shuffle(peers)
 
 	for _, peer := range peers {
 		if ctx.Err() != nil {
@@ -69,10 +66,6 @@ func (r *reconciler) initialSync(ctx context.Context) {
 }
 
 func (r *reconciler) run(ctx context.Context) {
-	if len(r.peers) == 0 {
-		return
-	}
-
 	ticker := time.NewTicker(r.interval)
 	defer ticker.Stop()
 
@@ -81,7 +74,12 @@ func (r *reconciler) run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			peer := r.peers[rand.IntN(len(r.peers))]
+			peers := r.membership.alivePeers()
+			if len(peers) == 0 {
+				continue
+			}
+
+			peer := peers[rand.IntN(len(peers))]
 			if err := r.reconcile(ctx, peer); err != nil {
 				r.logger.Debug("Anti-entropy round aborted", "peer", peer.ID, "error", err)
 			}
@@ -113,12 +111,12 @@ func (r *reconciler) reconcile(ctx context.Context, peer registry.ClusterMember)
 		return nil
 	}
 
-	_, err = client.Transfer(ctx, &appb.StateTransfer{
+	_, err = client.Merge(ctx, &appb.StateTransfer{
 		SenderId: r.nodeID,
 		States:   instanceStatesToProto(r.store.States(requested)),
 	})
 	if err != nil {
-		return fmt.Errorf("transfer states: %w", err)
+		return fmt.Errorf("merge states: %w", err)
 	}
 
 	return nil
@@ -182,11 +180,11 @@ func (s *antiEntropyServer) Compare(ctx context.Context, digest *appb.Digest) (*
 	}, nil
 }
 
-func (s *antiEntropyServer) Transfer(
+func (s *antiEntropyServer) Merge(
 	ctx context.Context,
 	transfer *appb.StateTransfer,
-) (*appb.StateTransferResponse, error) {
+) (*appb.MergeResponse, error) {
 	s.reconciler.mergeStates(transfer.GetSenderId(), transfer.GetStates())
 
-	return &appb.StateTransferResponse{}, nil
+	return &appb.MergeResponse{}, nil
 }

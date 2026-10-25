@@ -31,6 +31,12 @@ type Params struct {
 	ForwardMaxAttempts       int
 	GossipFanout             int
 	AntiEntropyInterval      time.Duration
+	SWIMProbeInterval        time.Duration
+	SWIMPingTimeout          time.Duration
+	SWIMPingReqTimeout       time.Duration
+	SWIMPingReqCount         int
+	SWIMSuspectTimeout       time.Duration
+	SWIMRetransmitMultiplier int
 	Logger                   *slog.Logger
 }
 
@@ -161,7 +167,15 @@ func newBackend(params Params) (registry.Backend, error) {
 			Members:             params.ClusterMembers,
 			GossipFanout:        params.GossipFanout,
 			AntiEntropyInterval: params.AntiEntropyInterval,
-			Logger:              params.Logger,
+			SWIM: ap.SWIMConfig{
+				ProbeInterval:        params.SWIMProbeInterval,
+				PingTimeout:          params.SWIMPingTimeout,
+				PingReqTimeout:       params.SWIMPingReqTimeout,
+				PingReqCount:         params.SWIMPingReqCount,
+				SuspectTimeout:       params.SWIMSuspectTimeout,
+				RetransmitMultiplier: params.SWIMRetransmitMultiplier,
+			},
+			Logger: params.Logger,
 		}), nil
 	default:
 		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
