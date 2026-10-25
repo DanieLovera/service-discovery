@@ -31,11 +31,11 @@ proto:
 		--go-grpc_out=. \
 		--go-grpc_opt=module=tpiii.local/daniel-tpiii \
 		proto/registry.proto \
-		proto/forwarding.proto \
 		proto/ap/state.proto \
 		proto/ap/swim.proto \
 		proto/ap/anti_entropy.proto \
-		proto/ap/packet.proto
+		proto/ap/packet.proto \
+		proto/cp/forwarding.proto
 
 fmt:
 	@$(GO) fmt ./...

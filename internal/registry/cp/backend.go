@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	forwardingpb "tpiii.local/daniel-tpiii/gen/forwarding"
+	cppb "tpiii.local/daniel-tpiii/gen/cp"
 	"tpiii.local/daniel-tpiii/internal/registry"
 )
 
@@ -59,7 +59,7 @@ func NewBackend(config Config) *Backend {
 }
 
 func (b *Backend) RegisterGRPC(registrar grpc.ServiceRegistrar) {
-	forwardingpb.RegisterForwardingServer(registrar, &forwardingServer{backend: b})
+	cppb.RegisterForwardingServer(registrar, &forwardingServer{backend: b})
 }
 
 func (b *Backend) Start(ctx context.Context) error {

@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v3.21.12
-// source: proto/forwarding.proto
+// source: proto/cp/forwarding.proto
 
-package forwardingpb
+package cppb
 
 import (
 	context "context"
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Forwarding_Apply_FullMethodName  = "/forwarding.Forwarding/Apply"
-	Forwarding_Lookup_FullMethodName = "/forwarding.Forwarding/Lookup"
+	Forwarding_Apply_FullMethodName  = "/cp.Forwarding/Apply"
+	Forwarding_Lookup_FullMethodName = "/cp.Forwarding/Lookup"
 )
 
 // ForwardingClient is the client API for Forwarding service.
@@ -142,7 +142,7 @@ func _Forwarding_Lookup_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Forwarding_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "forwarding.Forwarding",
+	ServiceName: "cp.Forwarding",
 	HandlerType: (*ForwardingServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -155,5 +155,5 @@ var Forwarding_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/forwarding.proto",
+	Metadata: "proto/cp/forwarding.proto",
 }
