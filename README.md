@@ -107,14 +107,14 @@ make docker-clean           # además borra imágenes locales y volúmenes (esta
 | Métricas del load balancer | `http://localhost:10010/metrics` |
 | Grafana | `http://localhost:8082` |
 | Prometheus | `http://localhost:8083` |
-| Dozzle (con `make docker-up-debug`) | `http://127.0.0.1:8081` |
+| Dozzle (con `make docker-up-debug`) | `http://localhost:8081` |
 
 ## Desarrollo
 
 ```sh
 make fmt-check    # verifica el formato
-make vet
-make test-race
+make vet          # análisis estático de go vet
+make test-race    # tests con el detector de data races
 make quality      # fmt-check, vet, staticcheck y test-race
 make proto        # regenera gen/ desde proto/
 ```
