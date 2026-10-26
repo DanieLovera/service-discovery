@@ -5,18 +5,18 @@ package ap;
 option go_package = "tpiii.local/daniel-tpiii/gen/ap;appb";
 
 message Ping {
-  uint64 probe_id = 1;
+  uint64 request_id = 1;
   repeated MembershipUpdate membership_updates = 2;
 }
 
 message Ack {
-  uint64 probe_id = 1;
+  uint64 request_id = 1;
   string responder_id = 2;
   repeated MembershipUpdate membership_updates = 3;
 }
 
 message PingReq {
-  uint64 probe_id = 1;
+  uint64 request_id = 1;
   string target_node_id = 2;
   repeated MembershipUpdate membership_updates = 3;
 }

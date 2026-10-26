@@ -28,9 +28,9 @@ type failureDetector struct {
 	transport  *udpTransport
 	logger     *slog.Logger
 
-	mu          sync.Mutex
-	nextProbeID uint64
-	pending     map[uint64]func()
+	mu            sync.Mutex
+	nextRequestID uint64
+	pending       map[uint64]func()
 }
 
 func newFailureDetector(
@@ -102,10 +102,10 @@ func (d *failureDetector) probe(ctx context.Context, target registry.ClusterMemb
 }
 
 func (d *failureDetector) ping(ctx context.Context, target registry.ClusterMember) bool {
-	probeID, acked := d.await()
-	defer d.forget(probeID)
+	requestID, acked := d.await()
+	defer d.forget(requestID)
 
-	d.send(target, d.pingPacket(probeID, target.ID))
+	d.send(target, d.pingPacket(requestID, target.ID))
 
 	return wait(ctx, acked, d.config.PingTimeout)
 }
@@ -121,11 +121,11 @@ func (d *failureDetector) pingReq(ctx context.Context, target registry.ClusterMe
 	shuffle(intermediaries)
 	intermediaries = intermediaries[:min(d.config.PingReqCount, len(intermediaries))]
 
-	probeID, acked := d.await()
-	defer d.forget(probeID)
+	requestID, acked := d.await()
+	defer d.forget(requestID)
 
 	for _, intermediary := range intermediaries {
-		d.send(intermediary, d.pingReqPacket(probeID, target.ID, intermediary.ID))
+		d.send(intermediary, d.pingReqPacket(requestID, target.ID, intermediary.ID))
 	}
 
 	return wait(ctx, acked, d.config.PingReqTimeout)
@@ -139,7 +139,7 @@ func (d *failureDetector) handlePing(senderID string, ping *appb.Ping) {
 		return
 	}
 
-	d.send(sender, d.ackPacket(ping.GetProbeId(), d.nodeID, sender.ID))
+	d.send(sender, d.ackPacket(ping.GetRequestId(), d.nodeID, sender.ID))
 }
 
 func (d *failureDetector) handlePingReq(senderID string, pingReq *appb.PingReq) {
@@ -155,24 +155,24 @@ func (d *failureDetector) handlePingReq(senderID string, pingReq *appb.PingReq) 
 		return
 	}
 
-	requestedProbeID := pingReq.GetProbeId()
-	probeID := d.register(func() {
-		d.send(requester, d.ackPacket(requestedProbeID, target.ID, requester.ID))
+	requesterRequestID := pingReq.GetRequestId()
+	requestID := d.register(func() {
+		d.send(requester, d.ackPacket(requesterRequestID, target.ID, requester.ID))
 	})
 
 	time.AfterFunc(d.config.PingTimeout, func() {
-		d.forget(probeID)
+		d.forget(requestID)
 	})
 
-	d.send(target, d.pingPacket(probeID, target.ID))
+	d.send(target, d.pingPacket(requestID, target.ID))
 }
 
 func (d *failureDetector) handleAck(ack *appb.Ack) {
 	d.membership.merge(membershipUpdatesFromProto(ack.GetMembershipUpdates()))
 
 	d.mu.Lock()
-	onAck, ok := d.pending[ack.GetProbeId()]
-	delete(d.pending, ack.GetProbeId())
+	onAck, ok := d.pending[ack.GetRequestId()]
+	delete(d.pending, ack.GetRequestId())
 	d.mu.Unlock()
 
 	if ok {
@@ -182,28 +182,28 @@ func (d *failureDetector) handleAck(ack *appb.Ack) {
 
 func (d *failureDetector) await() (uint64, <-chan struct{}) {
 	acked := make(chan struct{})
-	probeID := d.register(func() {
+	requestID := d.register(func() {
 		close(acked)
 	})
 
-	return probeID, acked
+	return requestID, acked
 }
 
 func (d *failureDetector) register(onAck func()) uint64 {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	d.nextProbeID++
-	d.pending[d.nextProbeID] = onAck
+	d.nextRequestID++
+	d.pending[d.nextRequestID] = onAck
 
-	return d.nextProbeID
+	return d.nextRequestID
 }
 
-func (d *failureDetector) forget(probeID uint64) {
+func (d *failureDetector) forget(requestID uint64) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	delete(d.pending, probeID)
+	delete(d.pending, requestID)
 }
 
 func (d *failureDetector) send(peer registry.ClusterMember, packet *appb.Packet) {
@@ -212,24 +212,24 @@ func (d *failureDetector) send(peer registry.ClusterMember, packet *appb.Packet)
 	}
 }
 
-func (d *failureDetector) pingPacket(probeID uint64, targetID string) *appb.Packet {
+func (d *failureDetector) pingPacket(requestID uint64, targetID string) *appb.Packet {
 	return &appb.Packet{
 		SenderId: d.nodeID,
 		Payload: &appb.Packet_Ping{
 			Ping: &appb.Ping{
-				ProbeId:           probeID,
+				RequestId:         requestID,
 				MembershipUpdates: membershipUpdatesToProto(d.membership.updatesFor(targetID)),
 			},
 		},
 	}
 }
 
-func (d *failureDetector) pingReqPacket(probeID uint64, targetID, intermediaryID string) *appb.Packet {
+func (d *failureDetector) pingReqPacket(requestID uint64, targetID, intermediaryID string) *appb.Packet {
 	return &appb.Packet{
 		SenderId: d.nodeID,
 		Payload: &appb.Packet_PingReq{
 			PingReq: &appb.PingReq{
-				ProbeId:           probeID,
+				RequestId:         requestID,
 				TargetNodeId:      targetID,
 				MembershipUpdates: membershipUpdatesToProto(d.membership.updatesFor(intermediaryID)),
 			},
@@ -237,12 +237,12 @@ func (d *failureDetector) pingReqPacket(probeID uint64, targetID, intermediaryID
 	}
 }
 
-func (d *failureDetector) ackPacket(probeID uint64, responderID, destinationID string) *appb.Packet {
+func (d *failureDetector) ackPacket(requestID uint64, responderID, destinationID string) *appb.Packet {
 	return &appb.Packet{
 		SenderId: d.nodeID,
 		Payload: &appb.Packet_Ack{
 			Ack: &appb.Ack{
-				ProbeId:           probeID,
+				RequestId:         requestID,
 				ResponderId:       responderID,
 				MembershipUpdates: membershipUpdatesToProto(d.membership.updatesFor(destinationID)),
 			},

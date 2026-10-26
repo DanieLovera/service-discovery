@@ -75,7 +75,7 @@ func (MembershipUpdateType) EnumDescriptor() ([]byte, []int) {
 
 type Ping struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	ProbeId           uint64                 `protobuf:"varint,1,opt,name=probe_id,json=probeId,proto3" json:"probe_id,omitempty"`
+	RequestId         uint64                 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	MembershipUpdates []*MembershipUpdate    `protobuf:"bytes,2,rep,name=membership_updates,json=membershipUpdates,proto3" json:"membership_updates,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
@@ -111,9 +111,9 @@ func (*Ping) Descriptor() ([]byte, []int) {
 	return file_proto_ap_swim_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Ping) GetProbeId() uint64 {
+func (x *Ping) GetRequestId() uint64 {
 	if x != nil {
-		return x.ProbeId
+		return x.RequestId
 	}
 	return 0
 }
@@ -127,7 +127,7 @@ func (x *Ping) GetMembershipUpdates() []*MembershipUpdate {
 
 type Ack struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	ProbeId           uint64                 `protobuf:"varint,1,opt,name=probe_id,json=probeId,proto3" json:"probe_id,omitempty"`
+	RequestId         uint64                 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	ResponderId       string                 `protobuf:"bytes,2,opt,name=responder_id,json=responderId,proto3" json:"responder_id,omitempty"`
 	MembershipUpdates []*MembershipUpdate    `protobuf:"bytes,3,rep,name=membership_updates,json=membershipUpdates,proto3" json:"membership_updates,omitempty"`
 	unknownFields     protoimpl.UnknownFields
@@ -164,9 +164,9 @@ func (*Ack) Descriptor() ([]byte, []int) {
 	return file_proto_ap_swim_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Ack) GetProbeId() uint64 {
+func (x *Ack) GetRequestId() uint64 {
 	if x != nil {
-		return x.ProbeId
+		return x.RequestId
 	}
 	return 0
 }
@@ -187,7 +187,7 @@ func (x *Ack) GetMembershipUpdates() []*MembershipUpdate {
 
 type PingReq struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	ProbeId           uint64                 `protobuf:"varint,1,opt,name=probe_id,json=probeId,proto3" json:"probe_id,omitempty"`
+	RequestId         uint64                 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	TargetNodeId      string                 `protobuf:"bytes,2,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`
 	MembershipUpdates []*MembershipUpdate    `protobuf:"bytes,3,rep,name=membership_updates,json=membershipUpdates,proto3" json:"membership_updates,omitempty"`
 	unknownFields     protoimpl.UnknownFields
@@ -224,9 +224,9 @@ func (*PingReq) Descriptor() ([]byte, []int) {
 	return file_proto_ap_swim_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PingReq) GetProbeId() uint64 {
+func (x *PingReq) GetRequestId() uint64 {
 	if x != nil {
-		return x.ProbeId
+		return x.RequestId
 	}
 	return 0
 }
@@ -309,16 +309,19 @@ var File_proto_ap_swim_proto protoreflect.FileDescriptor
 
 const file_proto_ap_swim_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/ap/swim.proto\x12\x02ap\"f\n" +
-	"\x04Ping\x12\x19\n" +
-	"\bprobe_id\x18\x01 \x01(\x04R\aprobeId\x12C\n" +
-	"\x12membership_updates\x18\x02 \x03(\v2\x14.ap.MembershipUpdateR\x11membershipUpdates\"\x88\x01\n" +
-	"\x03Ack\x12\x19\n" +
-	"\bprobe_id\x18\x01 \x01(\x04R\aprobeId\x12!\n" +
+	"\x13proto/ap/swim.proto\x12\x02ap\"j\n" +
+	"\x04Ping\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\x04R\trequestId\x12C\n" +
+	"\x12membership_updates\x18\x02 \x03(\v2\x14.ap.MembershipUpdateR\x11membershipUpdates\"\x8c\x01\n" +
+	"\x03Ack\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\x04R\trequestId\x12!\n" +
 	"\fresponder_id\x18\x02 \x01(\tR\vresponderId\x12C\n" +
-	"\x12membership_updates\x18\x03 \x03(\v2\x14.ap.MembershipUpdateR\x11membershipUpdates\"\x8f\x01\n" +
-	"\aPingReq\x12\x19\n" +
-	"\bprobe_id\x18\x01 \x01(\x04R\aprobeId\x12$\n" +
+	"\x12membership_updates\x18\x03 \x03(\v2\x14.ap.MembershipUpdateR\x11membershipUpdates\"\x93\x01\n" +
+	"\aPingReq\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\x04R\trequestId\x12$\n" +
 	"\x0etarget_node_id\x18\x02 \x01(\tR\ftargetNodeId\x12C\n" +
 	"\x12membership_updates\x18\x03 \x03(\v2\x14.ap.MembershipUpdateR\x11membershipUpdates\"{\n" +
 	"\x10MembershipUpdate\x12,\n" +

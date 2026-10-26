@@ -104,7 +104,7 @@ func (r *reconciler) reconcile(ctx context.Context, peer registry.ClusterMember)
 		return fmt.Errorf("compare digest: %w", err)
 	}
 
-	r.mergeStates(peer.ID, diff.GetStates())
+	r.mergeStates(peer.ID, diff.GetNewerStates())
 
 	requested := instanceKeysFromProto(diff.GetRequestedInstances())
 	if len(requested) == 0 {
@@ -175,7 +175,7 @@ func (s *antiEntropyServer) Compare(ctx context.Context, digest *appb.Digest) (*
 
 	return &appb.Diff{
 		SenderId:           s.reconciler.nodeID,
-		States:             instanceStatesToProto(newer),
+		NewerStates:        instanceStatesToProto(newer),
 		RequestedInstances: instanceKeysToProto(requested),
 	}, nil
 }

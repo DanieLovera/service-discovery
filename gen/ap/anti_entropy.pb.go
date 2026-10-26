@@ -136,7 +136,7 @@ func (x *DigestEntry) GetVersion() *Version {
 type Diff struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	SenderId           string                 `protobuf:"bytes,1,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	States             []*InstanceState       `protobuf:"bytes,2,rep,name=states,proto3" json:"states,omitempty"`
+	NewerStates        []*InstanceState       `protobuf:"bytes,2,rep,name=newer_states,json=newerStates,proto3" json:"newer_states,omitempty"`
 	RequestedInstances []*InstanceKey         `protobuf:"bytes,3,rep,name=requested_instances,json=requestedInstances,proto3" json:"requested_instances,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
@@ -179,9 +179,9 @@ func (x *Diff) GetSenderId() string {
 	return ""
 }
 
-func (x *Diff) GetStates() []*InstanceState {
+func (x *Diff) GetNewerStates() []*InstanceState {
 	if x != nil {
-		return x.States
+		return x.NewerStates
 	}
 	return nil
 }
@@ -293,10 +293,10 @@ const file_proto_ap_anti_entropy_proto_rawDesc = "" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1f\n" +
 	"\vinstance_id\x18\x02 \x01(\tR\n" +
 	"instanceId\x12%\n" +
-	"\aversion\x18\x03 \x01(\v2\v.ap.VersionR\aversion\"\x90\x01\n" +
+	"\aversion\x18\x03 \x01(\v2\v.ap.VersionR\aversion\"\x9b\x01\n" +
 	"\x04Diff\x12\x1b\n" +
-	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x12)\n" +
-	"\x06states\x18\x02 \x03(\v2\x11.ap.InstanceStateR\x06states\x12@\n" +
+	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x124\n" +
+	"\fnewer_states\x18\x02 \x03(\v2\x11.ap.InstanceStateR\vnewerStates\x12@\n" +
 	"\x13requested_instances\x18\x03 \x03(\v2\x0f.ap.InstanceKeyR\x12requestedInstances\"W\n" +
 	"\rStateTransfer\x12\x1b\n" +
 	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x12)\n" +
@@ -333,7 +333,7 @@ var file_proto_ap_anti_entropy_proto_goTypes = []any{
 var file_proto_ap_anti_entropy_proto_depIdxs = []int32{
 	1, // 0: ap.Digest.entries:type_name -> ap.DigestEntry
 	5, // 1: ap.DigestEntry.version:type_name -> ap.Version
-	6, // 2: ap.Diff.states:type_name -> ap.InstanceState
+	6, // 2: ap.Diff.newer_states:type_name -> ap.InstanceState
 	7, // 3: ap.Diff.requested_instances:type_name -> ap.InstanceKey
 	6, // 4: ap.StateTransfer.states:type_name -> ap.InstanceState
 	0, // 5: ap.AntiEntropy.Compare:input_type -> ap.Digest
