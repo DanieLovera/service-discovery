@@ -40,7 +40,7 @@ local. Las duraciones usan el formato de `time.ParseDuration` de Go (`300ms`, `5
 | Variable | Requerida | Default | Backend | Descripción |
 | --- | --- | --- | --- | --- |
 | `INSTANCE_ID` | sí | — | ambos | Id del nodo, debe estar en `CLUSTER_MEMBERS` |
-| `BACKEND` | no | `ap` | — | Backend de consistencia: `cp` (Raft) o `ap` (Gossip + SWIM) |
+| `BACKEND` | sí | — | — | Backend de consistencia: `cp` (Raft) o `ap` (Gossip + SWIM) |
 | `CLUSTER_MEMBERS` | sí | — | ambos | Membership estático: `id=grpc_address\|peer_address` separados por coma |
 | `GRPC_BIND_ADDRESS` | no | `0.0.0.0:7000` | ambos | Escucha de la API gRPC, Forwarding (CP) y Anti-Entropy (AP) |
 | `PEER_BIND_ADDRESS` | no | `0.0.0.0:7001` | ambos | Escucha entre nodos: Raft/TCP (CP), SWIM y Gossip/UDP (AP) |
