@@ -2,105 +2,121 @@
 
 ## Procesos
 
-El diseño define tres procesos independientes:
-
-- `registry`: nodo del cluster de Service Registry.
-- `load-balancer`: proceso que consumirá el Registry y ruteará tráfico.
-- `mock-service`: instancia de prueba que posteriormente se registrará, enviará
-  heartbeats y recibirá carga sintética.
+- `registry`: nodo del cluster de Service Registry. Expone la API gRPC (Register, Update, Deregister,
+  Heartbeat, Lookup y Watch) y replica el estado con uno de dos backends: CP (Raft) o AP (Gossip, SWIM y
+  Anti-Entropy).
+- `load-balancer`: hace Watch de los servicios configurados y rutea `/{servicio}/{path}` hacia
+  `http://{instancia}/{path}` con la estrategia de cada servicio.
+- `mock-service`: instancia de prueba que se registra, envía heartbeats y responde las requests que le
+  rutea el load balancer.
 
 ## Requisitos
 
-- Go 1.23.x
-- Docker (para imágenes)
+- Go 1.26.x
+- Docker con Docker Compose
 - `staticcheck` para ejecutar `make quality`
-
-Instalación de staticcheck:
+- `protoc`, `protoc-gen-go` y `protoc-gen-go-grpc`, solo para regenerar código con `make proto`
 
 ```sh
 go install honnef.co/go/tools/cmd/staticcheck@latest
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 
 ## Configuración
 
-La configuración se recibe por variables de entorno. `.env.example` documenta
-un entorno local de referencia, los binarios no leen archivos `.env` automáticamente.
+La configuración se recibe por variables de entorno. `docker-compose.yml` define los valores del entorno
+local. Las duraciones usan el formato de `time.ParseDuration` de Go (`300ms`, `5s`, `1m`).
 
 ### Compartidas
 
-| Variable | Default | Valores |
-| --- | --- | --- |
-| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
-| `LOG_FORMAT` | `json` | `json`, `text` |
+| Variable | Default | Valores | Descripción |
+| --- | --- | --- | --- |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` | Nivel mínimo de los logs |
+| `LOG_FORMAT` | `json` | `json`, `text` | Formato de los logs |
 
 ### Registry
 
-| Variable | Requerida | Default |
-| --- | --- | --- |
-| `REGISTRY_INSTANCE_ID` | sí | — |
-| `REGISTRY_BACKEND` | no | `ap` |
-| `REGISTRY_GRPC_ADDRESS` | no | `0.0.0.0:7000` |
-| `REGISTRY_CLUSTER_MEMBERS` | sí | — |
-| `HEARTBEAT_TTL_MULTIPLIER` | no | `3` |
+| Variable | Requerida | Default | Backend | Descripción |
+| --- | --- | --- | --- | --- |
+| `INSTANCE_ID` | sí | — | ambos | Id del nodo, debe estar en `CLUSTER_MEMBERS` |
+| `BACKEND` | no | `ap` | — | Backend de consistencia: `cp` (Raft) o `ap` (Gossip + SWIM) |
+| `CLUSTER_MEMBERS` | sí | — | ambos | Membership estático: `id=grpc_address\|peer_address` separados por coma |
+| `GRPC_BIND_ADDRESS` | no | `0.0.0.0:7000` | ambos | Escucha de la API gRPC, Forwarding (CP) y Anti-Entropy (AP) |
+| `PEER_BIND_ADDRESS` | no | `0.0.0.0:7001` | ambos | Escucha entre nodos: Raft/TCP (CP), SWIM y Gossip/UDP (AP) |
+| `OBSERVABILITY_BIND_ADDRESS` | no | `0.0.0.0:10000` | ambos | Escucha de `/metrics`, `/healthz` y `/readyz` |
+| `HEARTBEAT_TTL_MULTIPLIER` | no | `3` | ambos | TTL de cada instancia = `heartbeat_interval × multiplicador` |
+| `RAFT_DATA_DIR` | no | `/data/raft` | CP | Directorio del log, el estado y los snapshots de Raft |
+| `FORWARD_TIMEOUT` | no | `2s` | CP | Timeout de cada intento de reenvío al líder |
+| `FORWARD_MAX_ATTEMPTS` | no | `3` | CP | Intentos de reenvío al líder antes de devolver error |
+| `GOSSIP_FANOUT` | no | `3` | AP | Máximo de nodos ALIVE a los que se propaga cada versión nueva |
+| `ANTI_ENTROPY_INTERVAL` | no | `5s` | AP | Tiempo entre rondas de anti-entropy, también es el timeout de cada ronda |
+| `SWIM_PROBE_INTERVAL` | no | `1s` | AP | Período de SWIM: se chequea un peer por período |
+| `SWIM_PING_TIMEOUT` | no | `300ms` | AP | Espera máxima del ACK a un PING directo |
+| `SWIM_PING_REQ_TIMEOUT` | no | `600ms` | AP | Espera máxima del ACK indirecto luego de enviar los PING_REQ |
+| `SWIM_PING_REQ_COUNT` | no | `2` | AP | Cantidad de intermediarios que reciben un PING_REQ |
+| `SWIM_SUSPECT_TIMEOUT` | no | `5s` | AP | Tiempo que un nodo queda SUSPECT antes de pasar a CONFIRM |
+| `SWIM_RETRANSMIT_MULTIPLIER` | no | `4` | AP | λ de `λ·⌈log10(N+1)⌉`: reenvíos de cada novedad de membership |
 
-`HEARTBEAT_TTL_MULTIPLIER` define el TTL de cada instancia como
-`heartbeat_interval × multiplier`, tolerando hasta `multiplier - 1` heartbeats perdidos.
-
-`REGISTRY_CLUSTER_MEMBERS` es una lista separada por comas. Refleja el membership
-estático definido en el diseño. En etapas posteriores se ampliará la configuración
-con las direcciones específicas necesarias para Raft, SWIM, Gossip y Anti-Entropy.
+`SWIM_PING_TIMEOUT + SWIM_PING_REQ_TIMEOUT` no debe superar `SWIM_PROBE_INTERVAL`.
 
 ### Load Balancer
 
-| Variable | Requerida | Default |
-| --- | --- | --- |
-| `LB_HTTP_ADDRESS` | no | `0.0.0.0:8080` |
-| `LB_REGISTRY_ADDRESSES` | sí | — |
-| `SERVICES` | sí | — |
-| `REGISTRY_RETRY_INTERVAL` | no | `1s` |
-| `REGISTRY_KEEPALIVE_TIME` | no | `10s` |
-| `REGISTRY_KEEPALIVE_TIMEOUT` | no | `5s` |
+| Variable | Requerida | Default | Descripción |
+| --- | --- | --- | --- |
+| `REGISTRY_ADDRESSES` | sí | — | Direcciones gRPC de los registry nodes, separadas por coma, usadas para Watch |
+| `SERVICES` | sí | — | Servicios a balancear: `servicio:estrategia` separados por coma |
+| `HTTP_BIND_ADDRESS` | no | `0.0.0.0:8000` | Escucha HTTP: `/{servicio}/...` se rutea a una instancia del servicio |
+| `OBSERVABILITY_BIND_ADDRESS` | no | `0.0.0.0:10010` | Escucha de `/metrics`, `/healthz` y `/readyz` |
+| `REGISTRY_RETRY_INTERVAL` | no | `1s` | Espera antes de reabrir un Watch que se cortó |
+| `REGISTRY_KEEPALIVE_TIME` | no | `10s` | Inactividad tras la cual se envía un keepalive gRPC (mínimo `10s`) |
+| `REGISTRY_KEEPALIVE_TIMEOUT` | no | `5s` | Espera máxima de la respuesta al keepalive |
 
-`SERVICES` es una lista separada por comas de `servicio:estrategia`, con estrategia
-`round-robin`, `least-connections` o `weighted`. El Load Balancer rutea
-`/{servicio}/{path}` hacia `http://{instancia}/{path}`. Las variables `REGISTRY_*`
-configuran la conexión de Watch con el Registry. `REGISTRY_KEEPALIVE_TIME` debe ser
-de al menos `10s` (mínimo que admite gRPC).
+Las estrategias disponibles son `round-robin`, `least-connections` y `weighted`.
 
 ### Mock Service
 
-| Variable | Requerida | Default |
-| --- | --- | --- |
-| `MS_NAME` | sí | — |
-| `MS_INSTANCE_ID` | sí | — |
-| `MS_HTTP_ADDRESS` | no | `0.0.0.0:9000` |
-| `MS_REGISTRY_ADDRESSES` | sí | — |
-| `MS_WEIGHT` | no | `1` |
-| `MS_HEARTBEAT_INTERVAL` | no | `5s` |
+| Variable | Requerida | Default | Descripción |
+| --- | --- | --- | --- |
+| `NAME` | sí | — | Nombre del servicio con el que se registra la instancia |
+| `INSTANCE_ID` | sí | — | Id de la instancia dentro del servicio |
+| `ADVERTISE_ADDRESS` | sí | — | Dirección publicada en el registry, por la que el LB llega a la instancia |
+| `REGISTRY_ADDRESSES` | sí | — | Registry nodes para Register y heartbeats, si uno falla se prueba el siguiente |
+| `HTTP_BIND_ADDRESS` | no | `0.0.0.0:9000` | Escucha HTTP de las requests del load balancer |
+| `OBSERVABILITY_BIND_ADDRESS` | no | `0.0.0.0:10020` | Escucha de `/metrics`, `/healthz` y `/readyz` |
+| `WEIGHT` | no | `1` | Peso de la instancia para la estrategia weighted |
+| `HEARTBEAT_INTERVAL` | no | `5s` | Intervalo entre heartbeats, el registry calcula el TTL a partir de él |
 
-Las duraciones usan el formato de `time.ParseDuration` de Go (`500ms`, `2s`,
-`1m`, etc.).
+## Entorno local
 
-## Desarrollo local
+El entorno de Docker Compose levanta 5 nodos de registry, el load balancer, tres servicios con tres
+instancias cada uno (`service-a` con round-robin, `service-b` con least-connections y `service-c` con
+weighted y pesos 1, 2 y 3), Prometheus y Grafana.
 
 ```sh
-make test
-make test-race
+make docker-up              # backend CP
+BACKEND=ap make docker-up   # backend AP
+make docker-up-debug        # además levanta Dozzle para ver los logs
+make docker-down            # detiene el entorno
+make docker-clean           # además borra imágenes locales y volúmenes (estado de Raft)
+```
+
+| Servicio | URL |
+| --- | --- |
+| Load balancer | `http://localhost:8000/{servicio}/`, por ejemplo `curl localhost:8000/service-a/` |
+| Métricas del load balancer | `http://localhost:10010/metrics` |
+| Grafana | `http://localhost:8082` |
+| Prometheus | `http://localhost:8083` |
+| Dozzle (con `make docker-up-debug`) | `http://127.0.0.1:8081` |
+
+## Desarrollo
+
+```sh
+make fmt-check    # verifica el formato
 make vet
-make build-all
+make test-race
+make quality      # fmt-check, vet, staticcheck y test-race
+make proto        # regenera gen/ desde proto/
 ```
 
-Para ejecutar `staticcheck` junto con el resto de controles:
-
-```sh
-make quality
-```
-
-Los procesos validan configuración, inicializan logging estructurado y esperan
-una señal de terminación. Ejemplo:
-
-```sh
-REGISTRY_INSTANCE_ID=registry-1 \
-REGISTRY_CLUSTER_MEMBERS=registry-1:7000,registry-2:7000 \
-make run SERVICE=registry
-```
+`make help` lista todos los targets.
