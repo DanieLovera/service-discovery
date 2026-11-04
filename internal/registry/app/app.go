@@ -58,6 +58,8 @@ func New(params Params) (*App, error) {
 		return nil, err
 	}
 
+	metricsRegistry := metrics.New("registry", params.NodeID)
+
 	registryManager := registry.NewRegistryManager(backend)
 	healthManager := registry.NewHealthManager(backend, params.TTLMultiplier, params.Logger)
 	watchManager := registry.NewWatchManager(backend)
@@ -67,13 +69,12 @@ func New(params Params) (*App, error) {
 		registrations = append(registrations, registrar.RegisterGRPC)
 	}
 
-	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, params.Logger, registrations...)
+	grpcMetrics := grpc.NewServerMetrics(metricsRegistry.Registerer())
+	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, grpcMetrics, params.Logger, registrations...)
 
-	processMetrics := metrics.New("registry", params.NodeID)
-	metricsHandler := processMetrics.Handler()
 	observabilityServer := observability.NewServer(
 		params.ObservabilityBindAddress,
-		metricsHandler,
+		metricsRegistry.Handler(),
 		params.Logger,
 	)
 

@@ -25,6 +25,7 @@ type Server struct {
 func NewServer(
 	address string,
 	handler registrypb.RegistryServer,
+	metrics *ServerMetrics,
 	logger *slog.Logger,
 	registrations ...func(googlegrpc.ServiceRegistrar),
 ) *Server {
@@ -33,6 +34,8 @@ func NewServer(
 			MinTime:             keepaliveMinTime,
 			PermitWithoutStream: true,
 		}),
+		googlegrpc.UnaryInterceptor(metrics.unaryInterceptor),
+		googlegrpc.StreamInterceptor(metrics.streamInterceptor),
 	)
 	registrypb.RegisterRegistryServer(grpcServer, handler)
 
