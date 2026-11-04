@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	googlegrpc "google.golang.org/grpc"
 
 	"tpiii.local/daniel-tpiii/internal/metrics"
@@ -44,10 +45,15 @@ type grpcRegistrar interface {
 	RegisterGRPC(registrar googlegrpc.ServiceRegistrar)
 }
 
+type metricsRegistrar interface {
+	RegisterMetrics(registerer prometheus.Registerer)
+}
+
 type App struct {
 	backend             registry.Backend
 	healthManager       *registry.HealthManager
 	grpcServer          *grpc.Server
+	metricsRegistry     *metrics.Metrics
 	observabilityServer *observability.Server
 	logger              *slog.Logger
 }
@@ -83,6 +89,7 @@ func New(params Params) (*App, error) {
 		backend:             backend,
 		healthManager:       healthManager,
 		grpcServer:          grpcServer,
+		metricsRegistry:     metricsRegistry,
 		observabilityServer: observabilityServer,
 	}, nil
 }
@@ -98,6 +105,10 @@ func (a *App) Start(ctx context.Context) error {
 
 	if err := a.backend.Start(ctx); err != nil {
 		return fmt.Errorf("start registry backend: %w", err)
+	}
+
+	if registrar, ok := a.backend.(metricsRegistrar); ok {
+		registrar.RegisterMetrics(a.metricsRegistry.Registerer())
 	}
 
 	grpcErrs, err := a.grpcServer.Serve()
