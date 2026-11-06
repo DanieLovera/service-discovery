@@ -114,7 +114,7 @@ func LoadRegistry() (Registry, error) {
 
 	cfg := Registry{
 		NodeID:                   strings.TrimSpace(os.Getenv("INSTANCE_ID")),
-		Backend:                  strings.ToLower(stringFromEnvOrDefault("BACKEND", "ap")),
+		Backend:                  strings.ToLower(strings.TrimSpace(os.Getenv("BACKEND"))),
 		GRPCBindAddress:          stringFromEnvOrDefault("GRPC_BIND_ADDRESS", defaultRegistryGRPCBindAddress),
 		ObservabilityBindAddress: stringFromEnvOrDefault("OBSERVABILITY_BIND_ADDRESS", defaultRegistryObservabilityBindAddress),
 		ClusterMembers:           clusterMembers,
@@ -140,7 +140,9 @@ func LoadRegistry() (Registry, error) {
 	if cfg.NodeID == "" {
 		errs = append(errs, errors.New("INSTANCE_ID is required"))
 	}
-	if cfg.Backend != "cp" && cfg.Backend != "ap" {
+	if cfg.Backend == "" {
+		errs = append(errs, errors.New("BACKEND is required"))
+	} else if cfg.Backend != "cp" && cfg.Backend != "ap" {
 		errs = append(errs, fmt.Errorf("BACKEND must be one of cp, ap: %q", cfg.Backend))
 	}
 	if err == nil && len(cfg.ClusterMembers) == 0 {

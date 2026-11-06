@@ -29,6 +29,7 @@ type Config struct {
 
 type Backend struct {
 	store      *stateStore
+	membership *membership
 	transport  *udpTransport
 	gossiper   *gossiper
 	reconciler *reconciler
@@ -55,6 +56,7 @@ func NewBackend(config Config) *Backend {
 
 	return &Backend{
 		store:      store,
+		membership: membership,
 		transport:  transport,
 		gossiper:   newGossiper(config.NodeID, membership, config.GossipFanout, store, transport, config.Logger),
 		reconciler: newReconciler(config.NodeID, membership, config.AntiEntropyInterval, store, config.Logger),

@@ -164,6 +164,18 @@ func (s *stateStore) States(ids []registry.ServiceInstanceID) []instanceState {
 	return states
 }
 
+func (s *stateStore) Instances() []registry.ServiceInstance {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	instances := make([]registry.ServiceInstance, 0, len(s.states))
+	for _, state := range s.states {
+		instances = append(instances, state.Instance)
+	}
+
+	return instances
+}
+
 func (s *stateStore) Lookup(id registry.ServiceInstanceID) ([]registry.ServiceInstance, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

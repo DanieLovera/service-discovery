@@ -31,6 +31,7 @@ type Client struct {
 	addresses      []string
 	current        int
 	requestTimeout time.Duration
+	metrics        *ClientMetrics
 
 	conn   *grpc.ClientConn
 	client registrypb.RegistryClient
@@ -38,7 +39,7 @@ type Client struct {
 	mu sync.Mutex
 }
 
-func NewClient(addresses []string, requestTimeout time.Duration) (*Client, error) {
+func NewClient(addresses []string, requestTimeout time.Duration, metrics *ClientMetrics) (*Client, error) {
 	if len(addresses) == 0 {
 		return nil, errors.New("at least one registry address is required")
 	}
@@ -46,6 +47,7 @@ func NewClient(addresses []string, requestTimeout time.Duration) (*Client, error
 	client := &Client{
 		addresses:      slices.Clone(addresses),
 		requestTimeout: requestTimeout,
+		metrics:        metrics,
 	}
 
 	if err := client.connect(0); err != nil {
@@ -160,7 +162,11 @@ func isRetryable(err error) bool {
 }
 
 func (c *Client) connect(index int) error {
-	conn, err := grpc.NewClient(c.addresses[index], grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		c.addresses[index],
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(c.metrics.unaryInterceptor),
+	)
 	if err != nil {
 		return fmt.Errorf("create registry connection to %s: %w", c.addresses[index], err)
 	}

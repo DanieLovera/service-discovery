@@ -127,6 +127,20 @@ func (m *membership) status(nodeID string) memberStatus {
 	return m.states[nodeID].status
 }
 
+func (m *membership) count(status memberStatus) int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	count := 0
+	for _, state := range m.states {
+		if state.status == status {
+			count++
+		}
+	}
+
+	return count
+}
+
 func (m *membership) suspect(nodeID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

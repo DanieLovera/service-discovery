@@ -24,7 +24,7 @@ message DigestEntry {
 
 message Diff {
   string sender_id = 1;
-  repeated InstanceState states = 2;
+  repeated InstanceState newer_states = 2;
   repeated InstanceKey requested_instances = 3;
 }
 

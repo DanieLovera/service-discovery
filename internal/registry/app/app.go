@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	googlegrpc "google.golang.org/grpc"
 
 	"tpiii.local/daniel-tpiii/internal/metrics"
@@ -44,10 +45,15 @@ type grpcRegistrar interface {
 	RegisterGRPC(registrar googlegrpc.ServiceRegistrar)
 }
 
+type metricsRegistrar interface {
+	RegisterMetrics(registerer prometheus.Registerer)
+}
+
 type App struct {
 	backend             registry.Backend
 	healthManager       *registry.HealthManager
 	grpcServer          *grpc.Server
+	metricsRegistry     *metrics.Metrics
 	observabilityServer *observability.Server
 	logger              *slog.Logger
 }
@@ -58,6 +64,8 @@ func New(params Params) (*App, error) {
 		return nil, err
 	}
 
+	metricsRegistry := metrics.New("registry", params.NodeID)
+
 	registryManager := registry.NewRegistryManager(backend)
 	healthManager := registry.NewHealthManager(backend, params.TTLMultiplier, params.Logger)
 	watchManager := registry.NewWatchManager(backend)
@@ -67,13 +75,12 @@ func New(params Params) (*App, error) {
 		registrations = append(registrations, registrar.RegisterGRPC)
 	}
 
-	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, params.Logger, registrations...)
+	grpcMetrics := grpc.NewServerMetrics(metricsRegistry.Registerer())
+	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, grpcMetrics, params.Logger, registrations...)
 
-	processMetrics := metrics.New("registry", params.NodeID)
-	metricsHandler := processMetrics.Handler()
 	observabilityServer := observability.NewServer(
 		params.ObservabilityBindAddress,
-		metricsHandler,
+		metricsRegistry.Handler(),
 		params.Logger,
 	)
 
@@ -82,6 +89,7 @@ func New(params Params) (*App, error) {
 		backend:             backend,
 		healthManager:       healthManager,
 		grpcServer:          grpcServer,
+		metricsRegistry:     metricsRegistry,
 		observabilityServer: observabilityServer,
 	}, nil
 }
@@ -97,6 +105,10 @@ func (a *App) Start(ctx context.Context) error {
 
 	if err := a.backend.Start(ctx); err != nil {
 		return fmt.Errorf("start registry backend: %w", err)
+	}
+
+	if registrar, ok := a.backend.(metricsRegistrar); ok {
+		registrar.RegisterMetrics(a.metricsRegistry.Registerer())
 	}
 
 	grpcErrs, err := a.grpcServer.Serve()

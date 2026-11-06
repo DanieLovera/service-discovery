@@ -25,6 +25,10 @@ func New(service, instance string) *Metrics {
 	}
 }
 
+func (m *Metrics) Registerer() prometheus.Registerer {
+	return m.registry
+}
+
 func (m *Metrics) Handler() http.Handler {
 	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{})
 }
