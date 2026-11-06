@@ -42,15 +42,15 @@ func New(params Params) (*App, error) {
 		return nil, errors.New("at least one registry address is required")
 	}
 
-	requestTimeout := params.HeartbeatInterval / time.Duration(len(params.RegistryAddresses))
+	metricsRegistry := metrics.New("mock-service", params.InstanceID)
 
-	registryClient, err := registry.NewClient(params.RegistryAddresses, requestTimeout)
+	requestTimeout := params.HeartbeatInterval / time.Duration(len(params.RegistryAddresses))
+	registryMetrics := registry.NewClientMetrics(metricsRegistry.Registerer())
+
+	registryClient, err := registry.NewClient(params.RegistryAddresses, requestTimeout, registryMetrics)
 	if err != nil {
 		return nil, fmt.Errorf("initialize registry client: %w", err)
 	}
-
-	processMetrics := metrics.New("mock-service", params.InstanceID)
-	metricsHandler := processMetrics.Handler()
 
 	httpServer := http.NewServer(
 		params.HTTPBindAddress,
@@ -61,7 +61,7 @@ func New(params Params) (*App, error) {
 
 	observabilityServer := observability.NewServer(
 		params.ObservabilityBindAddress,
-		metricsHandler,
+		metricsRegistry.Handler(),
 		params.Logger,
 	)
 

@@ -17,13 +17,15 @@ import (
 type Server struct {
 	httpServer *http.Server
 	router     *routing.Manager
+	metrics    *ServerMetrics
 	logger     *slog.Logger
 }
 
-func NewServer(address string, router *routing.Manager, logger *slog.Logger) *Server {
+func NewServer(address string, router *routing.Manager, metrics *ServerMetrics, logger *slog.Logger) *Server {
 	s := &Server{
-		router: router,
-		logger: logger,
+		router:  router,
+		metrics: metrics,
+		logger:  logger,
 	}
 
 	mux := http.NewServeMux()
@@ -76,11 +78,14 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, routing.ErrUnknownService):
 			http.Error(w, err.Error(), http.StatusNotFound)
 		default:
+			s.metrics.observe(serviceName, "", http.StatusServiceUnavailable)
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
 	}
 	defer done()
+
+	code := http.StatusBadGateway
 
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
@@ -88,6 +93,10 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 			pr.Out.URL.Path = "/" + path
 			pr.Out.URL.RawPath = ""
 			pr.SetXForwarded()
+		},
+		ModifyResponse: func(response *http.Response) error {
+			code = response.StatusCode
+			return nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, _ *http.Request, err error) {
 			s.logger.Warn(
@@ -101,4 +110,5 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy.ServeHTTP(w, r)
+	s.metrics.observe(serviceName, instance.ID, code)
 }

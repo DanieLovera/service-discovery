@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	loadbalancer "tpiii.local/daniel-tpiii/internal/load-balancer"
 	"tpiii.local/daniel-tpiii/internal/load-balancer/discovery"
 	"tpiii.local/daniel-tpiii/internal/load-balancer/http"
@@ -36,6 +38,8 @@ type App struct {
 }
 
 func New(params Params) (*App, error) {
+	metricsRegistry := metrics.New("load-balancer", "load-balancer")
+
 	pools := make(map[string]*loadbalancer.ServicePool, len(params.Services))
 	upstreams := make(map[string]routing.Upstream, len(params.Services))
 
@@ -48,6 +52,14 @@ func New(params Params) (*App, error) {
 		servicePool := loadbalancer.NewServicePool()
 		pools[serviceName] = servicePool
 		upstreams[serviceName] = routing.Upstream{Pool: servicePool, Strategy: strategy}
+
+		metricsRegistry.Registerer().MustRegister(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Name:        "lb_pool_instances",
+			Help:        "Instances in the load balancer pool of the service.",
+			ConstLabels: prometheus.Labels{"service": serviceName},
+		}, func() float64 {
+			return float64(len(servicePool.Instances()))
+		}))
 	}
 
 	discoveryManager := discovery.NewManager(
@@ -61,12 +73,12 @@ func New(params Params) (*App, error) {
 		params.Logger,
 	)
 
-	httpServer := http.NewServer(params.HTTPBindAddress, routing.NewManager(upstreams), params.Logger)
+	httpMetrics := http.NewServerMetrics(metricsRegistry.Registerer())
+	httpServer := http.NewServer(params.HTTPBindAddress, routing.NewManager(upstreams), httpMetrics, params.Logger)
 
-	processMetrics := metrics.New("load-balancer", "load-balancer")
 	observabilityServer := observability.NewServer(
 		params.ObservabilityBindAddress,
-		processMetrics.Handler(),
+		metricsRegistry.Handler(),
 		params.Logger,
 	)
 
