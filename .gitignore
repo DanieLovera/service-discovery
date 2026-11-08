@@ -1,6 +1,7 @@
 /bin/
 /dist/
 /coverage/
+/results/
 *.coverprofile
 *.out
 *.test

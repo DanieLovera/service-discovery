@@ -193,6 +193,21 @@ services:
       ADVERTISE_ADDRESS: service-c-3:9000
       WEIGHT: 3
 
+  load-generator:
+    image: daanilo/load-generator:dev
+    build:
+      context: .
+      args:
+        SERVICE: load-generator
+    profiles: ["experiments"]
+    environment:
+      REGISTRY_ADDRESSES: *registry-addresses
+      LOAD_BALANCER_URL: http://load-balancer:8000
+      LOAD_BALANCER_SERVICES: service-a,service-b,service-c
+      OUTPUT_DIR: /results
+    volumes:
+      - ./results:/results
+
   dozzle:
     image: amir20/dozzle:latest
     profiles: ["debug"]
