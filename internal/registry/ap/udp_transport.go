@@ -6,13 +6,22 @@ import (
 	"log/slog"
 	"net"
 	"sync"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
 	appb "tpiii.local/daniel-tpiii/gen/ap"
 )
 
-const maxPacketSize = 64 * 1024
+const (
+	maxPacketSize   = 64 * 1024
+	addressCacheTTL = 10 * time.Second
+)
+
+type cachedAddress struct {
+	addr       *net.UDPAddr
+	resolvedAt time.Time
+}
 
 type udpTransport struct {
 	bindAddress string
@@ -20,12 +29,16 @@ type udpTransport struct {
 
 	conn *net.UDPConn
 	wg   sync.WaitGroup
+
+	addresses map[string]cachedAddress
+	mu        sync.Mutex
 }
 
 func newUDPTransport(bindAddress string, logger *slog.Logger) *udpTransport {
 	return &udpTransport{
 		bindAddress: bindAddress,
 		logger:      logger,
+		addresses:   make(map[string]cachedAddress),
 	}
 }
 
@@ -54,7 +67,7 @@ func (t *udpTransport) send(address string, packet *appb.Packet) error {
 		return fmt.Errorf("encode packet: %w", err)
 	}
 
-	target, err := net.ResolveUDPAddr("udp", address)
+	target, err := t.resolve(address)
 	if err != nil {
 		return fmt.Errorf("resolve %s: %w", address, err)
 	}
@@ -64,6 +77,24 @@ func (t *udpTransport) send(address string, packet *appb.Packet) error {
 	}
 
 	return nil
+}
+
+func (t *udpTransport) resolve(address string) (*net.UDPAddr, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if cached, ok := t.addresses[address]; ok && time.Since(cached.resolvedAt) < addressCacheTTL {
+		return cached.addr, nil
+	}
+
+	addr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return nil, err
+	}
+
+	t.addresses[address] = cachedAddress{addr: addr, resolvedAt: time.Now()}
+
+	return addr, nil
 }
 
 func (t *udpTransport) read(handler func(*appb.Packet)) {
