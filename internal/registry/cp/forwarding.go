@@ -76,7 +76,7 @@ func (f *forwarder) apply(ctx context.Context, leader registry.ClusterMember, co
 		return err
 	}
 
-	return fromStatus(response.GetStatus(), registry.ErrServiceInstanceNotFound)
+	return fromStatus(response.GetStatus())
 }
 
 func (f *forwarder) lookup(
@@ -99,12 +99,7 @@ func (f *forwarder) lookup(
 		return nil, err
 	}
 
-	notFound := registry.ErrServiceNotFound
-	if id.InstanceID != "" {
-		notFound = registry.ErrServiceInstanceNotFound
-	}
-
-	if err := fromStatus(response.GetStatus(), notFound); err != nil {
+	if err := fromStatus(response.GetStatus()); err != nil {
 		return nil, err
 	}
 
@@ -152,7 +147,7 @@ func toStatus(err error) (cppb.Status, error) {
 		return cppb.Status_STATUS_OK, nil
 	case errors.Is(err, registry.ErrServiceInstanceAlreadyExists):
 		return cppb.Status_STATUS_ALREADY_EXISTS, nil
-	case errors.Is(err, registry.ErrServiceInstanceNotFound), errors.Is(err, registry.ErrServiceNotFound):
+	case errors.Is(err, registry.ErrServiceInstanceNotFound):
 		return cppb.Status_STATUS_NOT_FOUND, nil
 	case errors.Is(err, registry.ErrServiceInstanceDeleted):
 		return cppb.Status_STATUS_DELETED, nil
@@ -163,14 +158,14 @@ func toStatus(err error) (cppb.Status, error) {
 	}
 }
 
-func fromStatus(status cppb.Status, notFound error) error {
+func fromStatus(status cppb.Status) error {
 	switch status {
 	case cppb.Status_STATUS_OK:
 		return nil
 	case cppb.Status_STATUS_ALREADY_EXISTS:
 		return registry.ErrServiceInstanceAlreadyExists
 	case cppb.Status_STATUS_NOT_FOUND:
-		return notFound
+		return registry.ErrServiceInstanceNotFound
 	case cppb.Status_STATUS_DELETED:
 		return registry.ErrServiceInstanceDeleted
 	case cppb.Status_STATUS_NOT_LEADER:

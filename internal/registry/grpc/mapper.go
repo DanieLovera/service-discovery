@@ -82,7 +82,7 @@ func grpcError(err error) error {
 	switch {
 	case errors.Is(err, registry.ErrServiceInstanceAlreadyExists):
 		return status.Error(codes.AlreadyExists, err.Error())
-	case errors.Is(err, registry.ErrServiceInstanceNotFound), errors.Is(err, registry.ErrServiceNotFound):
+	case errors.Is(err, registry.ErrServiceInstanceNotFound):
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, registry.ErrServiceInstanceDeleted):
 		return status.Error(codes.FailedPrecondition, err.Error())

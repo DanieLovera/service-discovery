@@ -196,10 +196,6 @@ func (s *stateStore) Lookup(id registry.ServiceInstanceID) ([]registry.ServiceIn
 		}
 	}
 
-	if len(instances) == 0 {
-		return nil, registry.ErrServiceNotFound
-	}
-
 	return instances, nil
 }
 
