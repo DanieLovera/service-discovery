@@ -2,18 +2,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-NETSHOOT_IMAGE="nicolaka/netshoot:v0.13"
+PROJECT="${COMPOSE_PROJECT_NAME:-$(basename "$ROOT")}"
+INJECTOR=fault-injector
 REGISTRIES=(registry-1 registry-2 registry-3 registry-4 registry-5)
-INSPECT_FORMAT='{{index .Config.Labels "com.docker.compose.service"}} {{.State.Pid}} '
+INSPECT_FORMAT='{{index .Config.Labels "com.docker.compose.service"}} {{.Id}} {{.State.Pid}} '
 INSPECT_FORMAT+='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
 
-declare -A PIDS IPS
+declare -A IDS PIDS IPS
 
 usage() {
 	cat >&2 <<'EOF'
 Usage: scripts/faults.sh <action> [arguments]
 
-  kill <service>              Kill a container with SIGKILL
+  kill <service>              Kill a container's main process with SIGKILL
   start <service>             Start a stopped container
   leader                      Print the current Raft leader (CP backend)
   partition <nodes> <nodes>   Drop traffic between two comma-separated groups of registry nodes
@@ -21,12 +22,11 @@ Usage: scripts/faults.sh <action> [arguments]
   degrade <delay> <loss>      Add latency and packet loss to every registry node, e.g. 100ms 5%
   restore                     Remove the added latency and packet loss
 
+Faults run inside the fault-injector container:
+  docker compose --profile experiments up -d fault-injector
+
 Each fault is appended to $FAULTS_FILE when it is set.
 EOF
-}
-
-compose() {
-	docker compose --project-directory "$ROOT" "$@"
 }
 
 record() {
@@ -42,22 +42,30 @@ record() {
 	fi
 }
 
-resolve_registries() {
+resolve() {
 	local -a ids
-	local service pid ip
+	local service id pid ip
 
-	mapfile -t ids < <(compose ps -q "${REGISTRIES[@]}")
+	mapfile -t ids < <(docker ps -a -q --filter "label=com.docker.compose.project=$PROJECT")
 
-	while read -r service pid ip; do
+	while read -r service id pid ip; do
+		IDS[$service]=$id
 		PIDS[$service]=$pid
 		IPS[$service]=$ip
 	done < <(docker inspect -f "$INSPECT_FORMAT" "${ids[@]}")
 }
 
+require_injector() {
+	if [[ ${PIDS[$INJECTOR]:-0} == 0 ]]; then
+		echo "$INJECTOR is not running, start it with: docker compose --profile experiments up -d $INJECTOR" >&2
+		exit 1
+	fi
+}
+
 apply_and_record() {
 	local script=$1 action=$2 target=${3:-}
 
-	docker run --rm --privileged --pid host "$NETSHOOT_IMAGE" sh -c "${script}echo applied" | {
+	docker exec "${IDS[$INJECTOR]}" sh -c "${script}echo applied" | {
 		read -r _
 		record "$action" "$target"
 		cat >/dev/null
@@ -70,8 +78,6 @@ in_each_registry() {
 
 	local script="" node command
 
-	resolve_registries
-
 	for node in "${REGISTRIES[@]}"; do
 		for command in "$@"; do
 			script+="nsenter -t ${PIDS[$node]} -n $command && "
@@ -82,38 +88,37 @@ in_each_registry() {
 }
 
 kill_service() {
-	local id
-	id=$(compose ps -a -q "$1")
+	local pid=${PIDS[$1]:-0}
 
-	compose kill -s SIGKILL "$1" 2>/dev/null || true
-
-	if ! timeout 5 docker wait "$id" >/dev/null; then
-		echo "$1 did not stop" >&2
+	if [[ $pid == 0 ]]; then
+		echo "$1 is not running" >&2
 		return 1
 	fi
 
-	record kill "$1"
+	apply_and_record "kill -KILL $pid && " kill "$1"
+
+	if ! timeout 15 docker wait "${IDS[$1]}" >/dev/null; then
+		echo "$1 did not stop" >&2
+		return 1
+	fi
 }
 
 start_service() {
-	compose start "$1"
+	docker start "${IDS[$1]:?unknown service $1}" >/dev/null
 	record start "$1"
 }
 
 leader() {
-	local registry metrics
+	local script
 
-	for registry in "${REGISTRIES[@]}"; do
-		metrics=$(compose exec -T "$registry" wget -qO- http://localhost:10000/metrics 2>/dev/null || true)
+	script="for registry in ${REGISTRIES[*]}; do "
+	script+="curl -s -m 1 http://\$registry:10000/metrics | grep -q '^registry_raft_state{state=\"LEADER\"} 1\$' "
+	script+="&& echo \$registry && exit 0; done; exit 1"
 
-		if grep -q '^registry_raft_state{state="LEADER"} 1$' <<<"$metrics"; then
-			echo "$registry"
-			return
-		fi
-	done
-
-	echo "no leader found" >&2
-	return 1
+	if ! docker exec "${IDS[$INJECTOR]}" sh -c "$script"; then
+		echo "no leader found" >&2
+		return 1
+	fi
 }
 
 partition() {
@@ -122,8 +127,6 @@ partition() {
 
 	IFS=, read -ra side_a <<<"$1"
 	IFS=, read -ra side_b <<<"$2"
-
-	resolve_registries
 
 	script+=$(drop_rules side_a side_b)
 	script+=$(drop_rules side_b side_a)
@@ -163,6 +166,20 @@ main() {
 	shift || true
 
 	case "$action" in
+	kill | leader | partition | heal | degrade | restore)
+		resolve
+		require_injector
+		;;
+	start)
+		resolve
+		;;
+	*)
+		usage
+		exit 1
+		;;
+	esac
+
+	case "$action" in
 	kill) kill_service "${1:?service required}" ;;
 	start) start_service "${1:?service required}" ;;
 	leader) leader ;;
@@ -170,10 +187,6 @@ main() {
 	heal) heal ;;
 	degrade) degrade "${1:?delay required}" "${2:?loss required}" ;;
 	restore) restore ;;
-	*)
-		usage
-		exit 1
-		;;
 	esac
 }
 

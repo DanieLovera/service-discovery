@@ -208,6 +208,13 @@ services:
     volumes:
       - ./results:/results
 
+  fault-injector:
+    image: nicolaka/netshoot:v0.13
+    profiles: ["experiments"]
+    privileged: true
+    pid: host
+    command: ["sh", "-c", "trap 'exit 0' TERM; sleep infinity & wait"]
+
   dozzle:
     image: amir20/dozzle:latest
     profiles: ["debug"]
