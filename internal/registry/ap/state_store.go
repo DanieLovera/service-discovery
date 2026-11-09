@@ -191,7 +191,7 @@ func (s *stateStore) Lookup(id registry.ServiceInstanceID) ([]registry.ServiceIn
 
 	var instances []registry.ServiceInstance
 	for _, state := range s.states {
-		if state.Instance.ID.ServiceName == id.ServiceName {
+		if state.Instance.ID.ServiceName == id.ServiceName && state.Instance.Status == registry.ServiceInstanceStatusHealthy {
 			instances = append(instances, state.Instance)
 		}
 	}
