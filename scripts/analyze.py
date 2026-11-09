@@ -65,11 +65,12 @@ def identify(run_dir):
 
 def phase_windows(run):
     faults = run["faults"]
+    end = run["end"] - END_MARGIN_S
     if len(faults) >= 2:
         start, stop = faults["t"].iloc[0], faults["t"].iloc[1]
-        return {"before": (WARMUP_S, start), "during": (start, stop), "after": (stop, run["end"])}
+        return {"before": (WARMUP_S, start), "during": (start, stop), "after": (stop, end)}
 
-    return {"steady": (WARMUP_S, run["end"])}
+    return {"steady": (WARMUP_S, end)}
 
 
 def fault_window(run):
@@ -130,7 +131,7 @@ def outages(run, groups):
     for group, nodes in groups.items():
         group_failed = failed[failed["node"].isin(nodes)]
         during = between(group_failed, (start, stop))
-        after = group_failed[group_failed["t"] >= stop]
+        after = between(group_failed, (stop, run["end"] - END_MARGIN_S))
 
         result[f"outage_after_fault_s.{group}"] = during["t"].max() - start if len(during) else 0.0
         result[f"outage_after_restore_s.{group}"] = after["t"].max() - stop if len(after) else 0.0
