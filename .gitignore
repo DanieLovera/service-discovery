@@ -2,6 +2,7 @@
 /dist/
 /coverage/
 /results/
+/.venv/
 *.coverprofile
 *.out
 *.test

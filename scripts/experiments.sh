@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FAULTS="$ROOT/scripts/faults.sh"
+PROMETHEUS_URL="http://localhost:8083"
 READY_TIMEOUT=120
 CLEAN_ATTEMPTS=3
 REGISTRIES=(registry-1 registry-2 registry-3 registry-4 registry-5)
@@ -167,6 +168,14 @@ start_load() {
 	log "Load generator started for ${duration}s"
 }
 
+export_metrics() {
+	if ! python3 -I "$ROOT/scripts/export_metrics.py" "$PROMETHEUS_URL" \
+		"$((START_MS / 1000 - 5))" "$(($(now_ms) / 1000))" "$RUN_DIR/metrics.csv"; then
+		log "Could not export Prometheus metrics"
+		return 1
+	fi
+}
+
 at() {
 	local offset=$1
 	shift
@@ -293,6 +302,7 @@ run_experiment() {
 	esac
 
 	wait "$LOAD_PID"
+	export_metrics
 	log "Finished $RUN_PATH"
 }
 
