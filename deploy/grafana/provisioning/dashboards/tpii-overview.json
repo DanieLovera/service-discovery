@@ -3,7 +3,338 @@
     "list": []
   },
   "editable": false,
+  "graphTooltip": 1,
   "panels": [
+    {
+      "type": "row",
+      "title": "Registry operations",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per second by node",
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(registry_grpc_requests_total[20s]))",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Errors per second by node and code",
+      "targets": [
+        {
+          "expr": "sum by (instance, code) (rate(registry_grpc_requests_total{code!=\"OK\"}[20s]))",
+          "legendFormat": "{{instance}} {{code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p99 by method",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, method) (rate(registry_grpc_request_duration_seconds_bucket[20s])))",
+          "legendFormat": "{{method}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p50 by method",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le, method) (rate(registry_grpc_request_duration_seconds_bucket[20s])))",
+          "legendFormat": "{{method}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      }
+    },
+    {
+      "type": "row",
+      "title": "Cluster state",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      }
+    },
+    {
+      "type": "state-timeline",
+      "title": "Raft leader (CP)",
+      "targets": [
+        {
+          "expr": "registry_raft_state{state=\"LEADER\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "-",
+                  "index": 0
+                },
+                "1": {
+                  "text": "LEADER",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Peers seen as SUSPECT or CONFIRM by node (AP)",
+      "targets": [
+        {
+          "expr": "sum by (instance, status) (registry_swim_members{status!=\"ALIVE\"})",
+          "legendFormat": "{{instance}} {{status}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "HEALTHY service instances by node",
+      "targets": [
+        {
+          "expr": "sum by (instance) (registry_instances{service=~\"service-.*\", status=\"HEALTHY\"})",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "EXPIRED and DELETED service instances by node",
+      "targets": [
+        {
+          "expr": "sum by (instance, status) (registry_instances{service=~\"service-.*\", status!=\"HEALTHY\"})",
+          "legendFormat": "{{instance}} {{status}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      }
+    },
+    {
+      "type": "row",
+      "title": "Load balancer and clients",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Load balancer pool by service",
+      "targets": [
+        {
+          "expr": "lb_pool_instances",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Load balancer requests per second by instance",
+      "targets": [
+        {
+          "expr": "sum by (instance_id) (rate(lb_requests_total{code=\"200\"}[20s]))",
+          "legendFormat": "{{instance_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 35
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Load balancer 5xx per second by service",
+      "targets": [
+        {
+          "expr": "sum by (service, code) (rate(lb_requests_total{code=~\"5..\"}[20s]))",
+          "legendFormat": "{{service}} {{code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Mock calls to the registry per second by code",
+      "targets": [
+        {
+          "expr": "sum by (method, code) (rate(mock_registry_requests_total[20s]))",
+          "legendFormat": "{{method}} {{code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      }
+    },
+    {
+      "type": "row",
+      "title": "Processes",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      }
+    },
     {
       "type": "stat",
       "title": "Targets Up",
@@ -17,7 +348,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 0
+        "y": 52
       }
     },
     {
@@ -34,7 +365,7 @@
         "h": 8,
         "w": 18,
         "x": 6,
-        "y": 0
+        "y": 52
       }
     },
     {
@@ -57,7 +388,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 60
       }
     },
     {
@@ -80,10 +411,11 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 60
       }
     }
   ],
+  "refresh": "5s",
   "schemaVersion": 41,
   "tags": [
     "tpiii"
@@ -98,5 +430,5 @@
   "timezone": "browser",
   "title": "TPIII Overview",
   "uid": "tpiii-overview",
-  "version": 1
+  "version": 2
 }
