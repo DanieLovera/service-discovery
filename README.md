@@ -255,9 +255,6 @@ Con el generador corriendo, en otra terminal:
 
 `<líder>` es el nodo que muestra `scripts/faults.sh leader`.
 
-Sin el generador el LB no recibe tráfico y los paneles quedan casi planos. Cada falla y cada vuelta atrás tarda
-entre 20 y 30 s en verse en Grafana. En AP, los efectos se ven sobre todo en el panel de peers SUSPECT y CONFIRM.
-
 Para pasar al otro backend sin reconstruir las imágenes: cortar el generador, `make docker-down`,
 `BACKEND=ap make demo-up` y `make demo-load` de nuevo.
 
