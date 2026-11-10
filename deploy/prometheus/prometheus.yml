@@ -10,11 +10,16 @@ scrape_configs:
           - registry-3:10000
           - registry-4:10000
           - registry-5:10000
+    relabel_configs: &instance-without-port
+      - source_labels: [__address__]
+        regex: '(.+):\d+'
+        target_label: instance
 
   - job_name: load-balancer
     static_configs:
       - targets:
           - load-balancer:10010
+    relabel_configs: *instance-without-port
 
   - job_name: mock-service
     static_configs:
@@ -28,3 +33,4 @@ scrape_configs:
           - service-c-1:10020
           - service-c-2:10020
           - service-c-3:10020
+    relabel_configs: *instance-without-port
