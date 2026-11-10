@@ -134,31 +134,21 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "transparent",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
+            "mode": "fixed",
+            "fixedColor": "transparent"
           },
           "mappings": [
             {
               "type": "value",
               "options": {
                 "0": {
-                  "text": "-",
+                  "text": "NOT LEADER",
+                  "color": "semi-dark-red",
                   "index": 0
                 },
                 "1": {
                   "text": "LEADER",
+                  "color": "green",
                   "index": 1
                 }
               }
