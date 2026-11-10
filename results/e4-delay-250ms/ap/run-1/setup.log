@@ -1,0 +1,812 @@
+make: Entering directory '/home/daniel/Documents/facultad/service-discovery'
+ Container service-discovery-fault-injector-1  Stopping
+ Container service-discovery-grafana-1  Stopping
+ Container service-discovery-fault-injector-1  Stopped
+ Container service-discovery-fault-injector-1  Removing
+ Container service-discovery-fault-injector-1  Removed
+ Container service-discovery-grafana-1  Stopped
+ Container service-discovery-grafana-1  Removing
+ Container service-discovery-grafana-1  Removed
+ Container service-discovery-prometheus-1  Stopping
+ Container service-discovery-prometheus-1  Stopped
+ Container service-discovery-prometheus-1  Removing
+ Container service-discovery-prometheus-1  Removed
+ Container service-discovery-service-c-3-1  Stopping
+ Container service-discovery-service-c-1-1  Stopping
+ Container service-discovery-load-balancer-1  Stopping
+ Container service-discovery-service-b-3-1  Stopping
+ Container service-discovery-service-b-2-1  Stopping
+ Container service-discovery-service-a-3-1  Stopping
+ Container service-discovery-service-a-2-1  Stopping
+ Container service-discovery-service-a-1-1  Stopping
+ Container service-discovery-service-c-2-1  Stopping
+ Container service-discovery-service-b-1-1  Stopping
+ Container service-discovery-service-b-3-1  Stopped
+ Container service-discovery-service-b-3-1  Removing
+ Container service-discovery-service-b-3-1  Removed
+ Container service-discovery-service-a-1-1  Stopped
+ Container service-discovery-service-a-1-1  Removing
+ Container service-discovery-service-a-2-1  Stopped
+ Container service-discovery-service-a-2-1  Removing
+ Container service-discovery-service-a-1-1  Removed
+ Container service-discovery-service-c-2-1  Stopped
+ Container service-discovery-service-c-2-1  Removing
+ Container service-discovery-service-a-2-1  Removed
+ Container service-discovery-service-a-3-1  Stopped
+ Container service-discovery-service-a-3-1  Removing
+ Container service-discovery-service-c-2-1  Removed
+ Container service-discovery-service-c-3-1  Stopped
+ Container service-discovery-service-c-3-1  Removing
+ Container service-discovery-service-a-3-1  Removed
+ Container service-discovery-service-b-2-1  Stopped
+ Container service-discovery-service-b-2-1  Removing
+ Container service-discovery-service-c-3-1  Removed
+ Container service-discovery-service-c-1-1  Stopped
+ Container service-discovery-service-c-1-1  Removing
+ Container service-discovery-service-b-2-1  Removed
+ Container service-discovery-load-balancer-1  Stopped
+ Container service-discovery-load-balancer-1  Removing
+ Container service-discovery-service-c-1-1  Removed
+ Container service-discovery-service-b-1-1  Stopped
+ Container service-discovery-service-b-1-1  Removing
+ Container service-discovery-load-balancer-1  Removed
+ Container service-discovery-service-b-1-1  Removed
+ Container service-discovery-registry-4-1  Stopping
+ Container service-discovery-registry-1-1  Stopping
+ Container service-discovery-registry-5-1  Stopping
+ Container service-discovery-registry-3-1  Stopping
+ Container service-discovery-registry-2-1  Stopping
+ Container service-discovery-registry-2-1  Stopped
+ Container service-discovery-registry-2-1  Removing
+ Container service-discovery-registry-4-1  Stopped
+ Container service-discovery-registry-4-1  Removing
+ Container service-discovery-registry-2-1  Removed
+ Container service-discovery-registry-5-1  Stopped
+ Container service-discovery-registry-5-1  Removing
+ Container service-discovery-registry-4-1  Removed
+ Container service-discovery-registry-3-1  Stopped
+ Container service-discovery-registry-3-1  Removing
+ Container service-discovery-registry-1-1  Stopped
+ Container service-discovery-registry-1-1  Removing
+ Container service-discovery-registry-5-1  Removed
+ Container service-discovery-registry-3-1  Removed
+ Container service-discovery-registry-1-1  Removed
+ Volume service-discovery_registry-4-data  Removing
+ Image daanilo/mock-service:dev  Removing
+ Volume service-discovery_registry-2-data  Removing
+ Volume service-discovery_registry-1-data  Removing
+ Volume service-discovery_registry-3-data  Removing
+ Volume service-discovery_registry-5-data  Removing
+ Image daanilo/load-generator:dev  Removing
+ Image daanilo/load-balancer:dev  Removing
+ Image daanilo/registry:dev  Removing
+ Network service-discovery_default  Removing
+ Volume service-discovery_registry-4-data  Removed
+ Volume service-discovery_registry-3-data  Removed
+ Volume service-discovery_registry-2-data  Removed
+ Image daanilo/mock-service:dev  Removed
+ Volume service-discovery_registry-5-data  Removed
+ Volume service-discovery_registry-1-data  Removed
+ Image daanilo/load-generator:dev  Removed
+ Image daanilo/registry:dev  Removed
+ Image daanilo/load-balancer:dev  Removed
+ Network service-discovery_default  Removed
+make: Leaving directory '/home/daniel/Documents/facultad/service-discovery'
+make: Entering directory '/home/daniel/Documents/facultad/service-discovery'
+#0 building with "default" instance using docker driver
+
+#1 [registry-3 internal] load build definition from Dockerfile
+#1 transferring dockerfile: 605B 0.0s done
+#1 DONE 0.0s
+
+#2 [registry-4 internal] load build definition from Dockerfile
+#2 transferring dockerfile: 605B done
+#2 DONE 0.0s
+
+#3 [registry-2 internal] load build definition from Dockerfile
+#3 transferring dockerfile: 605B 0.0s done
+#3 DONE 0.1s
+
+#4 [registry-5 internal] load build definition from Dockerfile
+#4 transferring dockerfile: 605B 0.0s done
+#4 DONE 0.1s
+
+#5 [registry-1 internal] load build definition from Dockerfile
+#5 transferring dockerfile: 605B 0.0s done
+#5 DONE 0.1s
+
+#6 [registry-5] resolve image config for docker.io/docker/dockerfile:1
+#6 DONE 0.6s
+
+#7 [registry-5] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#7 CACHED
+
+#8 [registry-4 internal] load build definition from Dockerfile
+#8 DONE 0.0s
+
+#9 [registry-4 internal] load metadata for docker.io/library/golang:1.26-alpine
+#9 ...
+
+#10 [registry-2 internal] load build definition from Dockerfile
+#10 DONE 0.0s
+
+#11 [registry-5 internal] load build definition from Dockerfile
+#11 DONE 0.0s
+
+#12 [registry-1 internal] load build definition from Dockerfile
+#12 DONE 0.0s
+
+#13 [registry-3 internal] load build definition from Dockerfile
+#13 DONE 0.0s
+
+#9 [registry-5 internal] load metadata for docker.io/library/golang:1.26-alpine
+#9 DONE 0.9s
+
+#14 [registry-4 internal] load metadata for docker.io/library/alpine:3.20
+#14 DONE 0.9s
+
+#15 [registry-2 internal] load .dockerignore
+#15 transferring context: 167B done
+#15 DONE 0.1s
+
+#16 [registry-1 internal] load .dockerignore
+#16 transferring context: 167B done
+#16 DONE 0.1s
+
+#17 [registry-5 internal] load .dockerignore
+#17 transferring context: 167B done
+#17 DONE 0.1s
+
+#18 [registry-3 internal] load .dockerignore
+#18 transferring context: 167B done
+#18 DONE 0.1s
+
+#19 [registry-4 internal] load .dockerignore
+#19 transferring context: 167B 0.0s done
+#19 DONE 0.2s
+
+#20 [registry-1 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#21 [registry-1 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#22 [registry-1 internal] load build context
+#22 ...
+
+#21 [registry-2 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#20 [registry-4 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#22 [registry-1 internal] load build context
+#22 transferring context: 6.29kB 0.1s done
+#22 DONE 0.2s
+
+#20 [registry-3 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#21 [registry-3 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#23 [registry-5 internal] load build context
+#23 transferring context: 6.29kB 0.1s done
+#23 DONE 0.2s
+
+#24 [registry-1 stage-1 2/3] RUN addgroup -S app && adduser -S -G app -u 10001 app &&     mkdir -p /data && chown app:app /data
+#24 CACHED
+
+#25 [registry-1 build 5/6] COPY . .
+#25 CACHED
+
+#26 [registry-1 build 6/6] RUN --mount=type=cache,target=/root/.cache/go-build     test -n "registry" &&     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/registry"
+#26 CACHED
+
+#27 [registry-1 build 4/6] RUN go mod download
+#27 CACHED
+
+#28 [registry-1 build 3/6] COPY go.mod go.sum ./
+#28 CACHED
+
+#29 [registry-1 build 2/6] WORKDIR /src
+#29 CACHED
+
+#30 [registry-1 stage-1 3/3] COPY --from=build /out/service /usr/local/bin/service
+#30 CACHED
+
+#31 [registry-3 internal] load build context
+#31 transferring context: 6.29kB 0.1s done
+#31 DONE 0.2s
+
+#32 [registry-5] exporting to image
+#32 exporting layers done
+#32 writing image sha256:80825233a025338a825703b9734201e5ba506baef2a21fec7a459819e827af08 0.0s done
+#32 naming to docker.io/daanilo/registry:dev 0.0s done
+#32 DONE 0.0s
+
+#33 [registry-1] exporting to image
+#33 exporting layers done
+#33 writing image sha256:8ce43146d4254ab95889fe8e8b0b1bd79425e7124b654b50398aecfcef4eac70 done
+#33 naming to docker.io/daanilo/registry:dev 0.0s done
+#33 DONE 0.0s
+
+#34 [registry-2 internal] load build context
+#34 transferring context: 6.29kB 0.1s done
+#34 DONE 0.2s
+
+#35 [registry-4 internal] load build context
+#35 transferring context: 6.29kB 0.1s done
+#35 DONE 0.2s
+
+#36 [registry-2] exporting to image
+#36 exporting layers done
+#36 writing image sha256:b7215b269736d47c8c0d6cc5c4d84b94e95b0c24a4fe2a363bf615d4ecc4cdb2 done
+#36 naming to docker.io/daanilo/registry:dev 0.0s done
+#36 DONE 0.0s
+
+#24 [registry-3 stage-1 2/3] RUN addgroup -S app && adduser -S -G app -u 10001 app &&     mkdir -p /data && chown app:app /data
+#24 CACHED
+
+#37 [registry-3 build 5/6] COPY . .
+#37 CACHED
+
+#29 [registry-3 build 2/6] WORKDIR /src
+#29 CACHED
+
+#38 [registry-3 build 6/6] RUN --mount=type=cache,target=/root/.cache/go-build     test -n "registry" &&     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/registry"
+#38 CACHED
+
+#39 [registry-3 build 3/6] COPY go.mod go.sum ./
+#39 CACHED
+
+#40 [registry-3 build 4/6] RUN go mod download
+#40 CACHED
+
+#41 [registry-3 stage-1 3/3] COPY --from=build /out/service /usr/local/bin/service
+#41 CACHED
+
+#42 [registry-4] exporting to image
+#42 exporting layers done
+#42 writing image sha256:4b79588b6270c73a59658c808c32c8877292407261c7d9e6b6d56920dcc9de75 0.0s done
+#42 naming to docker.io/daanilo/registry:dev 0.0s done
+#42 DONE 0.0s
+
+#43 [registry-3] exporting to image
+#43 exporting layers done
+#43 writing image sha256:f737e4c1b11e2c669047d4db4de540a5ab8dc35eea1e3782264af8b90376de51 0.0s done
+#43 naming to docker.io/daanilo/registry:dev 0.0s done
+#43 DONE 0.0s
+
+#44 [registry-5] resolving provenance for metadata file
+#44 DONE 0.1s
+
+#45 [registry-1] resolving provenance for metadata file
+#45 DONE 0.1s
+
+#46 [registry-2] resolving provenance for metadata file
+#46 DONE 0.1s
+
+#47 [registry-4] resolving provenance for metadata file
+#47 DONE 0.0s
+
+#48 [registry-3] resolving provenance for metadata file
+#48 DONE 0.1s
+
+#49 [service-c-3 internal] load build definition from Dockerfile
+#49 transferring dockerfile: 605B 0.0s done
+#49 DONE 0.0s
+
+#50 [service-a-2 internal] load build definition from Dockerfile
+#50 transferring dockerfile: 605B 0.0s done
+#50 DONE 0.0s
+
+#51 [service-c-1 internal] load build definition from Dockerfile
+#51 transferring dockerfile: 605B 0.0s done
+#51 DONE 0.0s
+
+#52 [load-balancer internal] load build definition from Dockerfile
+#52 transferring dockerfile: 605B 0.0s done
+#52 DONE 0.0s
+
+#53 [service-c-2 internal] load build definition from Dockerfile
+#53 transferring dockerfile: 605B 0.0s done
+#53 DONE 0.1s
+
+#54 [service-a-3 internal] load build definition from Dockerfile
+#54 transferring dockerfile: 605B 0.0s done
+#54 DONE 0.0s
+
+#55 [service-b-1 internal] load build definition from Dockerfile
+#55 transferring dockerfile: 605B 0.0s done
+#55 DONE 0.0s
+
+#56 [service-b-2 internal] load build definition from Dockerfile
+#56 transferring dockerfile: 605B 0.0s done
+#56 DONE 0.0s
+
+#57 [service-b-3 internal] load build definition from Dockerfile
+#57 transferring dockerfile: 605B 0.0s done
+#57 DONE 0.1s
+
+#7 [service-c-1] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#7 CACHED
+
+#58 [service-a-1 internal] load build definition from Dockerfile
+#58 transferring dockerfile: 605B 0.0s done
+#58 DONE 0.1s
+
+#6 [service-a-1] resolve image config for docker.io/docker/dockerfile:1
+#6 DONE 1.3s
+
+#7 [service-b-3] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#7 CACHED
+
+#59 [service-c-2 internal] load build definition from Dockerfile
+#59 DONE 0.0s
+
+#14 [service-c-2 internal] load metadata for docker.io/library/alpine:3.20
+#14 ...
+
+#60 [service-b-1 internal] load build definition from Dockerfile
+#60 DONE 0.0s
+
+#61 [service-b-2 internal] load build definition from Dockerfile
+#61 DONE 0.0s
+
+#62 [load-balancer internal] load build definition from Dockerfile
+#62 DONE 0.0s
+
+#63 [service-a-3 internal] load build definition from Dockerfile
+#63 DONE 0.0s
+
+#64 [service-a-2 internal] load build definition from Dockerfile
+#64 DONE 0.0s
+
+#65 [service-c-3 internal] load build definition from Dockerfile
+#65 DONE 0.0s
+
+#66 [service-c-1 internal] load build definition from Dockerfile
+#66 DONE 0.0s
+
+#14 [service-b-2 internal] load metadata for docker.io/library/alpine:3.20
+#14 ...
+
+#67 [service-a-1 internal] load build definition from Dockerfile
+#67 DONE 0.0s
+
+#14 [service-a-1 internal] load metadata for docker.io/library/alpine:3.20
+#14 ...
+
+#68 [service-b-3 internal] load build definition from Dockerfile
+#68 DONE 0.0s
+
+#14 [service-c-1 internal] load metadata for docker.io/library/alpine:3.20
+#14 DONE 1.4s
+
+#69 [service-a-1 internal] load .dockerignore
+#69 transferring context: 167B 0.0s done
+#69 DONE 0.1s
+
+#70 [service-c-3 internal] load .dockerignore
+#70 transferring context: 167B 0.0s done
+#70 DONE 0.1s
+
+#71 [load-balancer internal] load .dockerignore
+#71 transferring context: 167B done
+#71 DONE 0.1s
+
+#72 [service-a-2 internal] load .dockerignore
+#72 transferring context: 167B 0.0s done
+#72 DONE 0.1s
+
+#73 [service-b-1 internal] load .dockerignore
+#73 transferring context: 167B 0.0s done
+#73 DONE 0.2s
+
+#74 [service-c-2 internal] load .dockerignore
+#74 transferring context: 167B 0.0s done
+#74 DONE 0.3s
+
+#75 [service-a-1 internal] load build context
+#75 DONE 0.0s
+
+#20 [service-c-3 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#21 [service-c-3 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#76 [service-c-1 internal] load .dockerignore
+#76 transferring context: 167B 0.0s done
+#76 DONE 0.3s
+
+#9 [service-b-3 internal] load metadata for docker.io/library/golang:1.26-alpine
+#9 DONE 1.8s
+
+#20 [service-b-1 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#21 [service-b-1 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#77 [service-a-3 internal] load .dockerignore
+#77 transferring context: 167B 0.0s done
+#77 DONE 0.4s
+
+#21 [service-b-1 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#78 [service-b-2 internal] load .dockerignore
+#78 transferring context: 167B done
+#78 DONE 0.5s
+
+#79 [service-c-3 internal] load build context
+#79 ...
+
+#80 [service-b-3 internal] load .dockerignore
+#80 transferring context: 167B 0.0s done
+#80 DONE 0.1s
+
+#79 [service-c-3 internal] load build context
+#79 ...
+
+#20 [service-c-2 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#21 [service-c-2 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#79 [service-c-3 internal] load build context
+#79 transferring context: 6.29kB 0.1s done
+#79 ...
+
+#20 [service-c-1 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#21 [service-c-1 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#75 [service-a-1 internal] load build context
+#75 transferring context: 6.29kB 0.2s done
+#75 DONE 0.4s
+
+#81 [load-balancer internal] load build context
+#81 transferring context: 6.29kB 0.2s done
+#81 DONE 0.4s
+
+#20 [service-b-3 stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#20 DONE 0.0s
+
+#82 [service-a-2 internal] load build context
+#82 transferring context: 6.29kB 0.1s done
+#82 DONE 0.5s
+
+#79 [service-c-3 internal] load build context
+#79 DONE 0.4s
+
+#83 [service-b-1 internal] load build context
+#83 transferring context: 6.29kB 0.1s done
+#83 DONE 0.4s
+
+#84 [service-c-1 internal] load build context
+#84 ...
+
+#21 [service-b-3 build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#21 DONE 0.0s
+
+#85 [service-a-1 build 4/6] RUN go mod download
+#85 CACHED
+
+#86 [service-a-1 build 6/6] RUN --mount=type=cache,target=/root/.cache/go-build     test -n "mock-service" &&     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/mock-service"
+#86 CACHED
+
+#24 [service-a-1 stage-1 2/3] RUN addgroup -S app && adduser -S -G app -u 10001 app &&     mkdir -p /data && chown app:app /data
+#24 CACHED
+
+#87 [service-a-1 build 5/6] COPY . .
+#87 CACHED
+
+#29 [service-a-1 build 2/6] WORKDIR /src
+#29 CACHED
+
+#88 [service-a-1 build 3/6] COPY go.mod go.sum ./
+#88 CACHED
+
+#89 [service-a-1 stage-1 3/3] COPY --from=build /out/service /usr/local/bin/service
+#89 CACHED
+
+#90 [service-a-3 internal] load build context
+#90 transferring context: 6.29kB 0.1s done
+#90 DONE 0.3s
+
+#91 [service-c-2 internal] load build context
+#91 transferring context: 6.29kB 0.1s done
+#91 DONE 0.4s
+
+#84 [service-c-1 internal] load build context
+#84 transferring context: 6.29kB 0.1s done
+#84 DONE 0.3s
+
+#92 [service-b-2 internal] load build context
+#92 transferring context: 6.29kB 0.1s done
+#92 DONE 0.3s
+
+#93 [load-balancer build 5/6] COPY . .
+#93 CACHED
+
+#94 [load-balancer build 4/6] RUN go mod download
+#94 CACHED
+
+#95 [load-balancer build 3/6] COPY go.mod go.sum ./
+#95 CACHED
+
+#96 [load-balancer build 6/6] RUN --mount=type=cache,target=/root/.cache/go-build     test -n "load-balancer" &&     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/load-balancer"
+#96 CACHED
+
+#97 [load-balancer stage-1 3/3] COPY --from=build /out/service /usr/local/bin/service
+#97 CACHED
+
+#98 [service-a-1] exporting to image
+#98 exporting layers done
+#98 writing image sha256:64c433acb39fe23dc9dff3d9c3acbb197dfa09b70fabc5b1392b9cddf6bd2d7c done
+#98 naming to docker.io/daanilo/mock-service:dev 0.0s done
+#98 DONE 0.1s
+
+#99 [service-b-1 build 6/6] RUN --mount=type=cache,target=/root/.cache/go-build     test -n "mock-service" &&     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/mock-service"
+#99 CACHED
+
+#29 [service-b-1 build 2/6] WORKDIR /src
+#29 CACHED
+
+#100 [service-b-1 build 3/6] COPY go.mod go.sum ./
+#100 CACHED
+
+#101 [service-b-1 build 4/6] RUN go mod download
+#101 CACHED
+
+#24 [service-b-1 stage-1 2/3] RUN addgroup -S app && adduser -S -G app -u 10001 app &&     mkdir -p /data && chown app:app /data
+#24 CACHED
+
+#102 [service-b-1 build 5/6] COPY . .
+#102 CACHED
+
+#103 [service-b-1 stage-1 3/3] COPY --from=build /out/service /usr/local/bin/service
+#103 CACHED
+
+#104 [service-c-1] exporting to image
+#104 exporting layers done
+#104 writing image sha256:d850150fdb6df14963859f9a5dc1462988c726febf437ae649c32e0ea10bd677 done
+#104 naming to docker.io/daanilo/mock-service:dev 0.2s done
+#104 DONE 0.2s
+
+#105 [service-c-3] exporting to image
+#105 exporting layers done
+#105 writing image sha256:88b48a6967502690699952e067af52ac440687f083e4dac0f00877a556172233 0.0s done
+#105 naming to docker.io/daanilo/mock-service:dev 0.1s done
+#105 DONE 0.1s
+
+#106 [service-a-2] exporting to image
+#106 exporting layers done
+#106 writing image sha256:21cb10fc6393f6b00e2806080f1827bb543ac334040f1b3ab57ead9a72e186c8 0.0s done
+#106 naming to docker.io/daanilo/mock-service:dev 0.1s done
+#106 DONE 0.2s
+
+#107 [service-b-3 internal] load build context
+#107 transferring context: 6.29kB 0.1s done
+#107 DONE 0.1s
+
+#108 [service-a-3] exporting to image
+#108 exporting layers done
+#108 writing image sha256:12cc5074d51b604bf6a9340ec173363d3ab54dafb6eee41872055d2225850450 0.1s done
+#108 naming to docker.io/daanilo/mock-service:dev 0.2s done
+#108 DONE 0.3s
+
+#109 [load-balancer] exporting to image
+#109 exporting layers done
+#109 writing image sha256:0cb211b63691124e668703b70ca5b55d9cc36e9050a5813be5463ac35bd48084 0.0s done
+#109 naming to docker.io/daanilo/load-balancer:dev 0.2s done
+#109 DONE 0.2s
+
+#110 [service-c-2] exporting to image
+#110 exporting layers done
+#110 writing image sha256:294d6e7e931f33d96f23854cbed574889938370796f06e4ced0ffb3eccc6dd2f 0.0s done
+#110 naming to docker.io/daanilo/mock-service:dev 0.2s done
+#110 DONE 0.2s
+
+#111 [service-b-1] exporting to image
+#111 exporting layers done
+#111 writing image sha256:850b616d5e7bed84c1c4179c2385447828eb63fd34b7181ec8d476b36945cd2c 0.0s done
+#111 naming to docker.io/daanilo/mock-service:dev 0.2s done
+#111 DONE 0.2s
+
+#112 [service-b-2] exporting to image
+#112 exporting layers done
+#112 writing image sha256:451c430473ded9562bd34e5a4b5527cdd5249c3e999d24f493a3d9cbf06ca0d1 0.1s done
+#112 naming to docker.io/daanilo/mock-service:dev 0.2s done
+#112 DONE 0.3s
+
+#113 [service-b-3] exporting to image
+#113 exporting layers done
+#113 writing image sha256:c01534da220e824f90e49b2312cb1d83f53759304844c984b77dd25a94fef970 0.1s done
+#113 naming to docker.io/daanilo/mock-service:dev 0.1s done
+#113 DONE 0.1s
+
+#114 [service-a-1] resolving provenance for metadata file
+#114 DONE 0.4s
+
+#115 [load-balancer] resolving provenance for metadata file
+#115 DONE 0.4s
+
+#116 [service-a-2] resolving provenance for metadata file
+#116 DONE 0.2s
+
+#117 [service-a-3] resolving provenance for metadata file
+#117 DONE 0.1s
+
+#118 [service-b-2] resolving provenance for metadata file
+#118 DONE 0.1s
+
+#119 [service-c-2] resolving provenance for metadata file
+#119 DONE 0.2s
+
+#120 [service-c-1] resolving provenance for metadata file
+#120 DONE 0.1s
+
+#121 [service-c-3] resolving provenance for metadata file
+#121 DONE 0.3s
+
+#122 [service-b-1] resolving provenance for metadata file
+#122 DONE 0.3s
+
+#123 [service-b-3] resolving provenance for metadata file
+#123 DONE 0.0s
+ Network service-discovery_default  Creating
+ Network service-discovery_default  Created
+ Volume "service-discovery_registry-5-data"  Creating
+ Volume "service-discovery_registry-5-data"  Created
+ Volume "service-discovery_registry-4-data"  Creating
+ Volume "service-discovery_registry-4-data"  Created
+ Volume "service-discovery_registry-1-data"  Creating
+ Volume "service-discovery_registry-1-data"  Created
+ Volume "service-discovery_registry-2-data"  Creating
+ Volume "service-discovery_registry-2-data"  Created
+ Volume "service-discovery_registry-3-data"  Creating
+ Volume "service-discovery_registry-3-data"  Created
+ Container service-discovery-registry-2-1  Creating
+ Container service-discovery-registry-1-1  Creating
+ Container service-discovery-registry-5-1  Creating
+ Container service-discovery-registry-4-1  Creating
+ Container service-discovery-registry-3-1  Creating
+ Container service-discovery-registry-2-1  Created
+ Container service-discovery-registry-3-1  Created
+ Container service-discovery-registry-1-1  Created
+ Container service-discovery-registry-4-1  Created
+ Container service-discovery-registry-5-1  Created
+ Container service-discovery-service-a-3-1  Creating
+ Container service-discovery-service-b-1-1  Creating
+ Container service-discovery-service-b-3-1  Creating
+ Container service-discovery-service-c-1-1  Creating
+ Container service-discovery-service-a-1-1  Creating
+ Container service-discovery-service-b-2-1  Creating
+ Container service-discovery-service-c-2-1  Creating
+ Container service-discovery-load-balancer-1  Creating
+ Container service-discovery-service-a-2-1  Creating
+ Container service-discovery-service-c-3-1  Creating
+ Container service-discovery-service-b-1-1  Created
+ Container service-discovery-service-c-2-1  Created
+ Container service-discovery-service-a-3-1  Created
+ Container service-discovery-service-c-3-1  Created
+ Container service-discovery-service-c-1-1  Created
+ Container service-discovery-service-b-3-1  Created
+ Container service-discovery-service-a-1-1  Created
+ Container service-discovery-load-balancer-1  Created
+ Container service-discovery-service-a-2-1  Created
+ Container service-discovery-service-b-2-1  Created
+ Container service-discovery-prometheus-1  Creating
+ Container service-discovery-prometheus-1  Created
+ Container service-discovery-grafana-1  Creating
+ Container service-discovery-grafana-1  Created
+ Container service-discovery-registry-1-1  Starting
+ Container service-discovery-registry-2-1  Starting
+ Container service-discovery-registry-3-1  Starting
+ Container service-discovery-registry-5-1  Starting
+ Container service-discovery-registry-4-1  Starting
+ Container service-discovery-registry-5-1  Started
+ Container service-discovery-registry-3-1  Started
+ Container service-discovery-registry-2-1  Started
+ Container service-discovery-registry-4-1  Started
+ Container service-discovery-registry-1-1  Started
+ Container service-discovery-service-a-2-1  Starting
+ Container service-discovery-service-b-2-1  Starting
+ Container service-discovery-service-c-2-1  Starting
+ Container service-discovery-load-balancer-1  Starting
+ Container service-discovery-service-a-1-1  Starting
+ Container service-discovery-service-c-3-1  Starting
+ Container service-discovery-service-b-1-1  Starting
+ Container service-discovery-service-b-3-1  Starting
+ Container service-discovery-service-a-3-1  Starting
+ Container service-discovery-service-c-1-1  Starting
+ Container service-discovery-service-c-1-1  Started
+ Container service-discovery-service-a-2-1  Started
+ Container service-discovery-service-c-2-1  Started
+ Container service-discovery-load-balancer-1  Started
+ Container service-discovery-service-b-2-1  Started
+ Container service-discovery-service-a-3-1  Started
+ Container service-discovery-service-c-3-1  Started
+ Container service-discovery-service-b-3-1  Started
+ Container service-discovery-service-b-1-1  Started
+ Container service-discovery-service-a-1-1  Started
+ Container service-discovery-prometheus-1  Starting
+ Container service-discovery-prometheus-1  Started
+ Container service-discovery-grafana-1  Starting
+ Container service-discovery-grafana-1  Started
+make: Leaving directory '/home/daniel/Documents/facultad/service-discovery'
+#0 building with "default" instance using docker driver
+
+#1 [load-generator internal] load build definition from Dockerfile
+#1 transferring dockerfile: 605B 0.0s done
+#1 DONE 0.0s
+
+#2 [load-generator] resolve image config for docker.io/docker/dockerfile:1
+#2 DONE 0.7s
+
+#3 [load-generator] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 CACHED
+
+#4 [load-generator internal] load build definition from Dockerfile
+#4 DONE 0.0s
+
+#5 [load-generator internal] load metadata for docker.io/library/golang:1.26-alpine
+#5 DONE 0.6s
+
+#6 [load-generator internal] load metadata for docker.io/library/alpine:3.20
+#6 DONE 0.6s
+
+#7 [load-generator internal] load .dockerignore
+#7 transferring context: 167B done
+#7 DONE 0.0s
+
+#8 [load-generator build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#8 DONE 0.0s
+
+#9 [load-generator stage-1 1/3] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#9 DONE 0.0s
+
+#10 [load-generator internal] load build context
+#10 transferring context: 6.29kB 0.1s done
+#10 DONE 0.1s
+
+#11 [load-generator build 3/6] COPY go.mod go.sum ./
+#11 CACHED
+
+#12 [load-generator stage-1 2/3] RUN addgroup -S app && adduser -S -G app -u 10001 app &&     mkdir -p /data && chown app:app /data
+#12 CACHED
+
+#13 [load-generator build 5/6] COPY . .
+#13 CACHED
+
+#14 [load-generator build 6/6] RUN --mount=type=cache,target=/root/.cache/go-build     test -n "load-generator" &&     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/load-generator"
+#14 CACHED
+
+#15 [load-generator build 2/6] WORKDIR /src
+#15 CACHED
+
+#16 [load-generator build 4/6] RUN go mod download
+#16 CACHED
+
+#17 [load-generator stage-1 3/3] COPY --from=build /out/service /usr/local/bin/service
+#17 CACHED
+
+#18 [load-generator] exporting to image
+#18 exporting layers done
+#18 writing image sha256:33ddcdbf3110908ae326b00c01f1893543bfcd3992a1810e97a8eb552a5d6c3a done
+#18 naming to docker.io/daanilo/load-generator:dev 0.0s done
+#18 DONE 0.0s
+
+#19 [load-generator] resolving provenance for metadata file
+#19 DONE 0.0s
+ Container service-discovery-fault-injector-1  Creating
+ Container service-discovery-fault-injector-1  Created
+ Container service-discovery-fault-injector-1  Starting
+ Container service-discovery-fault-injector-1  Started

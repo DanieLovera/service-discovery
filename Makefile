@@ -72,13 +72,13 @@ docker-up-debug:
 	@docker compose --profile debug up --build -d
 
 docker-down:
-	@docker compose --profile debug down
+	@docker compose --profile debug --profile experiments down
 
 docker-ps:
-	@docker compose --profile debug ps
+	@docker compose --profile debug --profile experiments ps
 
 docker-images:
-	@docker compose --profile debug images
+	@docker compose --profile debug --profile experiments images
 
 docker-clean:
-	@docker compose --profile debug down --rmi local -v
+	@docker compose --profile debug --profile experiments down --rmi local -v

@@ -8,7 +8,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 ARG SERVICE
-RUN test -n "${SERVICE}" && \
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    test -n "${SERVICE}" && \
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/service "./cmd/${SERVICE}"
 
 FROM alpine:3.20
