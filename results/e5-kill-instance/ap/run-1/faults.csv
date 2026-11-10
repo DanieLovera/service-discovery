@@ -1,0 +1,3 @@
+timestamp_ms,action,target
+1794244194287.228,kill,service-c-3
+1794244225787.819,start,service-c-3

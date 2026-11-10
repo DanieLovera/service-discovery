@@ -1,0 +1,3 @@
+timestamp_ms,action,target
+1794251801391.460,kill,registry-3
+1794251832329.357,start,registry-3
