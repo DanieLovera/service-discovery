@@ -115,7 +115,6 @@ services:
       REGISTRY_KEEPALIVE_TIMEOUT: 5s
     ports:
       - "8000:8000"
-      - "10010:10010"
     depends_on: *registry-dependencies
 
   service-a-1:

@@ -125,7 +125,6 @@ make docker-clean           # además borra imágenes locales y volúmenes (esta
 | Servicio | URL |
 | --- | --- |
 | Load balancer | `http://localhost:8000/{servicio}/`, por ejemplo `curl localhost:8000/service-a/` |
-| Métricas del load balancer | `http://localhost:10010/metrics` |
 | Grafana | `http://localhost:8082` (usuario `admin`, contraseña `admin`) |
 | Prometheus | `http://localhost:8083` |
 | Dozzle (con `make docker-up-debug`) | `http://localhost:8081` |
@@ -135,8 +134,8 @@ Grafana carga el dashboard **TPIII Overview**, que se actualiza cada 5 s y tiene
 - **Registry operations**: requests y errores por nodo, latencias p50 y p99 por método.
 - **Cluster state**: líder de Raft (CP), peers vistos como SUSPECT o CONFIRM por SWIM (AP) e instancias
   HEALTHY, EXPIRED y DELETED en cada nodo.
-- **Load balancer and clients**: pool del LB por servicio, requests por instancia, respuestas 5xx y
-  llamadas de los mocks al registry.
+- **Registry clients (load balancer and mock services)**: pool del LB por servicio, requests por
+  instancia, respuestas 5xx y llamadas de los mocks al registry.
 - **Processes**: targets activos, goroutines, memoria y uptime de cada proceso.
 
 ## Experimentos

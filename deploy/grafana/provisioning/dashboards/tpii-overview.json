@@ -227,7 +227,7 @@
     },
     {
       "type": "row",
-      "title": "Load balancer and clients",
+      "title": "Registry clients (load balancer and mock services)",
       "collapsed": false,
       "panels": [],
       "gridPos": {
@@ -357,7 +357,7 @@
       "targets": [
         {
           "expr": "go_goroutines",
-          "legendFormat": "{{job}}",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -374,7 +374,7 @@
       "targets": [
         {
           "expr": "process_resident_memory_bytes",
-          "legendFormat": "{{job}}",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -397,7 +397,7 @@
       "targets": [
         {
           "expr": "time() - process_start_time_seconds",
-          "legendFormat": "{{job}}",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
