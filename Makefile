@@ -2,9 +2,11 @@ SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
 GO ?= go
+DEMO_DURATION ?= 20m
 
 .PHONY: help fmt fmt-check vet staticcheck test test-race test-integration quality \
-		docker-up docker-up-debug docker-down docker-ps docker-images docker-clean proto
+		docker-up docker-up-debug docker-down docker-ps docker-images docker-clean proto \
+		demo-up demo-load
 
 help:
 	@printf '%s\n' \
@@ -22,7 +24,9 @@ help:
 		'make docker-down      	Stop and remove the Docker Compose environment' \
 		'make docker-images    	Show Docker Compose service images' \
 		'make docker-ps        	Show Docker Compose service status' \
-		'make docker-clean     	Remove Compose containers, local images and volumes'
+		'make docker-clean     	Remove Compose containers, local images and volumes' \
+		'make demo-up          	Start the environment, the load generator image and the fault injector for a demo' \
+		'make demo-load        	Run the load generator for DEMO_DURATION (default 20m), writing to results/demo'
 
 proto:
 	@protoc \
@@ -82,3 +86,11 @@ docker-images:
 
 docker-clean:
 	@docker compose --profile debug --profile experiments down --rmi local -v
+
+demo-up: docker-up
+	@docker compose --profile experiments build load-generator
+	@docker compose --profile experiments up -d fault-injector
+
+demo-load:
+	@docker compose --profile experiments run --rm --user "$$(id -u):$$(id -g)" \
+		-e DURATION=$(DEMO_DURATION) -e OUTPUT_DIR=/results/demo load-generator

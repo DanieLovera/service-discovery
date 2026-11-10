@@ -194,7 +194,7 @@ Cada corrida escribe en `results/<experimento>/<backend>/run-<repetición>/`:
 | `metrics.csv` | Series de Prometheus: líder de Raft, miembros de SWIM, instancias por estado y pool del LB |
 | `setup.log`, `load-generator.log` | Logs de la preparación del entorno y del generador |
 
-Los tiempos son Unix en milisegundos. `results/` no se versiona.
+Los tiempos son Unix en milisegundos. `results/` se versiona, salvo `results/demo/` (ver [Demo](#demo)).
 
 ### Análisis
 
@@ -232,6 +232,37 @@ scripts/faults.sh heal
 scripts/faults.sh degrade 100ms 5%                              # demora y pérdida en cada registry
 scripts/faults.sh restore
 ```
+
+### Demo
+
+Para mostrar el sistema en vivo conviene no usar `experiments.sh`, que limpia y reconstruye el entorno en cada
+corrida. El entorno se levanta una sola vez, el generador corre con una duración larga y las fallas se inyectan a
+mano mientras se sigue Grafana con el rango en "Last 5 minutes":
+
+```sh
+make demo-up              # entorno, imagen del generador y fault-injector; BACKEND=ap make demo-up para AP
+make demo-load            # generador por 20 min en primer plano; make demo-load DEMO_DURATION=30m lo cambia
+```
+
+Con el generador corriendo, en otra terminal:
+
+| Qué mostrar | Falla | Vuelta atrás |
+| --- | --- | --- |
+| Caída del líder (CP) | `scripts/faults.sh kill <líder>` | `scripts/faults.sh start <líder>` |
+| Partición | `scripts/faults.sh partition registry-1,registry-2 registry-3,registry-4,registry-5` | `scripts/faults.sh heal` |
+| Red degradada | `scripts/faults.sh degrade 250ms 0%` | `scripts/faults.sh restore` |
+| Caída de una instancia | `scripts/faults.sh kill service-c-3` | `scripts/faults.sh start service-c-3` |
+
+`<líder>` es el nodo que muestra `scripts/faults.sh leader`.
+
+Sin el generador el LB no recibe tráfico y los paneles quedan casi planos. Cada falla y cada vuelta atrás tarda
+entre 20 y 30 s en verse en Grafana. En AP, los efectos se ven sobre todo en el panel de peers SUSPECT y CONFIRM.
+
+Para pasar al otro backend sin reconstruir las imágenes: cortar el generador, `make docker-down`,
+`BACKEND=ap make demo-up` y `make demo-load` de nuevo.
+
+El generador escribe en `results/demo/`, que no se versiona y se sobrescribe en cada `make demo-load`. Grafana
+muestra qué pasa; los tiempos y latencias precisos están en los resultados de los experimentos.
 
 ## Desarrollo
 
