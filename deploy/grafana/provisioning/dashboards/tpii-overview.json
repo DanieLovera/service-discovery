@@ -7,7 +7,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Registry operations",
+      "title": "Registry Operations",
       "collapsed": false,
       "panels": [],
       "gridPos": {
@@ -65,10 +65,10 @@
     },
     {
       "type": "timeseries",
-      "title": "Latency p99 by method",
+      "title": "Latency p50 by method",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, method) (rate(registry_grpc_request_duration_seconds_bucket[20s])))",
+          "expr": "histogram_quantile(0.5, sum by (le, method) (rate(registry_grpc_request_duration_seconds_bucket[20s])))",
           "legendFormat": "{{method}}",
           "refId": "A"
         }
@@ -88,10 +88,10 @@
     },
     {
       "type": "timeseries",
-      "title": "Latency p50 by method",
+      "title": "Latency p99 by method",
       "targets": [
         {
-          "expr": "histogram_quantile(0.5, sum by (le, method) (rate(registry_grpc_request_duration_seconds_bucket[20s])))",
+          "expr": "histogram_quantile(0.99, sum by (le, method) (rate(registry_grpc_request_duration_seconds_bucket[20s])))",
           "legendFormat": "{{method}}",
           "refId": "A"
         }
@@ -111,7 +111,7 @@
     },
     {
       "type": "row",
-      "title": "Cluster state",
+      "title": "Registry Cluster State",
       "collapsed": false,
       "panels": [],
       "gridPos": {
@@ -220,7 +220,7 @@
     },
     {
       "type": "row",
-      "title": "Registry clients (load balancer and mock services)",
+      "title": "Registry Client - Load Balancer",
       "collapsed": false,
       "panels": [],
       "gridPos": {
@@ -242,7 +242,7 @@
       ],
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 35
       }
@@ -265,8 +265,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 35
       }
     },
@@ -288,7 +288,19 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
+        "x": 16,
+        "y": 35
+      }
+    },
+    {
+      "type": "row",
+      "title": "Registry Client - Mock Service",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
         "x": 0,
         "y": 43
       }
@@ -311,9 +323,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 43
+        "w": 24,
+        "x": 0,
+        "y": 44
       }
     },
     {
@@ -325,7 +337,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 52
       }
     },
     {
@@ -341,7 +353,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 52
+        "y": 53
       }
     },
     {
@@ -358,7 +370,7 @@
         "h": 8,
         "w": 18,
         "x": 6,
-        "y": 52
+        "y": 53
       }
     },
     {
@@ -381,7 +393,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 61
       }
     },
     {
@@ -404,7 +416,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 61
       }
     }
   ],
