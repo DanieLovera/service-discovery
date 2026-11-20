@@ -19,6 +19,8 @@ import (
 	"tpiii.local/daniel-tpiii/internal/registry/grpc"
 )
 
+const backendShutdownTimeout = 3 * time.Second
+
 type Params struct {
 	NodeID                   string
 	Backend                  string
@@ -154,7 +156,10 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 	wg.Wait()
 
-	if err := a.backend.Shutdown(ctx); err != nil {
+	backendCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), backendShutdownTimeout)
+	defer cancel()
+
+	if err := a.backend.Shutdown(backendCtx); err != nil {
 		errs[2] = fmt.Errorf("shutdown registry backend: %w", err)
 	}
 
