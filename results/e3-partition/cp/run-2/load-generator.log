@@ -1,0 +1,2 @@
+{"time":"2026-11-09T17:26:53.528213857Z","level":"INFO","msg":"Load generator started","duration":150000000000,"output_dir":"/results/e3-partition/cp/run-2"}
+{"time":"2026-11-09T17:29:23.529721305Z","level":"INFO","msg":"Load generator finished"}

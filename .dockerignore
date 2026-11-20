@@ -11,3 +11,7 @@ coverage
 Dockerfile*
 README.md
 docs
+results
+scripts
+deploy
+.venv

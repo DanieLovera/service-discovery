@@ -1,0 +1,3 @@
+timestamp_ms,action,target
+1794240201223.871,partition,registry-2 registry-1 | registry-3 registry-4 registry-5
+1794240261720.693,heal,

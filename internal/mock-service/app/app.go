@@ -1,0 +1,204 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"tpiii.local/daniel-tpiii/internal/metrics"
+	"tpiii.local/daniel-tpiii/internal/mock-service/http"
+	"tpiii.local/daniel-tpiii/internal/mock-service/registry"
+	"tpiii.local/daniel-tpiii/internal/observability"
+)
+
+type Params struct {
+	ServiceName              string
+	InstanceID               string
+	HTTPBindAddress          string
+	AdvertiseAddress         string
+	ObservabilityBindAddress string
+	RegistryAddresses        []string
+	Weight                   int
+	HeartbeatInterval        time.Duration
+	Logger                   *slog.Logger
+}
+
+type App struct {
+	instance            registry.Instance
+	registryClient      *registry.Client
+	httpServer          *http.Server
+	observabilityServer *observability.Server
+	logger              *slog.Logger
+}
+
+func New(params Params) (*App, error) {
+	if len(params.RegistryAddresses) == 0 {
+		return nil, errors.New("at least one registry address is required")
+	}
+
+	metricsRegistry := metrics.New("mock-service", params.InstanceID)
+
+	requestTimeout := params.HeartbeatInterval / time.Duration(len(params.RegistryAddresses))
+	registryMetrics := registry.NewClientMetrics(metricsRegistry.Registerer())
+
+	registryClient, err := registry.NewClient(params.RegistryAddresses, requestTimeout, registryMetrics)
+	if err != nil {
+		return nil, fmt.Errorf("initialize registry client: %w", err)
+	}
+
+	httpServer := http.NewServer(
+		params.HTTPBindAddress,
+		params.ServiceName,
+		params.InstanceID,
+		params.Logger,
+	)
+
+	observabilityServer := observability.NewServer(
+		params.ObservabilityBindAddress,
+		metricsRegistry.Handler(),
+		params.Logger,
+	)
+
+	return &App{
+		instance: registry.Instance{
+			ServiceName:       params.ServiceName,
+			InstanceID:        params.InstanceID,
+			Address:           params.AdvertiseAddress,
+			Weight:            params.Weight,
+			HeartbeatInterval: params.HeartbeatInterval,
+		},
+		registryClient:      registryClient,
+		httpServer:          httpServer,
+		observabilityServer: observabilityServer,
+		logger:              params.Logger,
+	}, nil
+}
+
+func (a *App) Start(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	observabilityErrs, err := a.observabilityServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve observability server: %w", err)
+	}
+
+	httpErrs, err := a.httpServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve HTTP server: %w", err)
+	}
+
+	if err := a.register(ctx); err != nil {
+		return fmt.Errorf("register service instance: %w", err)
+	}
+
+	go a.runHeartbeats(ctx)
+
+	a.observabilityServer.SetReady(true)
+	a.logger.Info("Mock service started")
+
+	select {
+	case <-ctx.Done():
+		return nil
+
+	case err := <-observabilityErrs:
+		return fmt.Errorf("observability server failed: %w", err)
+
+	case err := <-httpErrs:
+		return fmt.Errorf("mock HTTP server failed: %w", err)
+	}
+}
+
+func (a *App) Shutdown(ctx context.Context) error {
+	defer a.logger.Info("Mock service stopped")
+
+	a.observabilityServer.SetReady(false)
+
+	errs := make([]error, 4)
+
+	err := a.registryClient.Deregister(ctx, a.instance)
+	switch status.Code(err) {
+	case codes.OK, codes.NotFound, codes.FailedPrecondition:
+	default:
+		errs[0] = fmt.Errorf("deregister service instance: %w", err)
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		if err := a.observabilityServer.Shutdown(ctx); err != nil {
+			errs[1] = fmt.Errorf("shutdown observability server: %w", err)
+		}
+	})
+
+	wg.Go(func() {
+		if err := a.httpServer.Shutdown(ctx); err != nil {
+			errs[2] = fmt.Errorf("shutdown mock HTTP server: %w", err)
+		}
+	})
+
+	wg.Wait()
+
+	if err := a.registryClient.Close(); err != nil {
+		errs[3] = fmt.Errorf("close registry connection: %w", err)
+	}
+
+	return errors.Join(errs...)
+}
+
+func (a *App) register(ctx context.Context) error {
+	for {
+		err := a.registryClient.Register(ctx, a.instance)
+		if status.Code(err) == codes.AlreadyExists {
+			err = a.registryClient.Update(ctx, a.instance)
+		}
+
+		if err == nil || !errors.Is(err, registry.ErrUnavailable) {
+			return err
+		}
+
+		a.logger.Warn("Registry unavailable, retrying register", "error", err)
+
+		select {
+		case <-time.After(a.instance.HeartbeatInterval):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+func (a *App) runHeartbeats(ctx context.Context) {
+	ticker := time.NewTicker(a.instance.HeartbeatInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			err := a.registryClient.Heartbeat(ctx, a.instance)
+			if ctx.Err() != nil {
+				return
+			}
+
+			switch {
+			case status.Code(err) == codes.NotFound:
+				a.logger.Warn("Service instance not found in registry, registering again")
+
+				if err := a.register(ctx); err != nil && ctx.Err() == nil {
+					a.logger.Error("Failed to register service instance again", "error", err)
+				}
+
+			case err != nil:
+				a.logger.Error("Failed to send heartbeat", "error", err)
+			}
+
+		case <-ctx.Done():
+			return
+		}
+	}
+}

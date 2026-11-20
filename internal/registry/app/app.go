@@ -1,0 +1,200 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	googlegrpc "google.golang.org/grpc"
+
+	"tpiii.local/daniel-tpiii/internal/metrics"
+	"tpiii.local/daniel-tpiii/internal/observability"
+	"tpiii.local/daniel-tpiii/internal/registry"
+	"tpiii.local/daniel-tpiii/internal/registry/ap"
+	"tpiii.local/daniel-tpiii/internal/registry/cp"
+	"tpiii.local/daniel-tpiii/internal/registry/grpc"
+)
+
+const backendShutdownTimeout = 3 * time.Second
+
+type Params struct {
+	NodeID                   string
+	Backend                  string
+	GRPCBindAddress          string
+	ObservabilityBindAddress string
+	ClusterMembers           []registry.ClusterMember
+	TTLMultiplier            int
+	PeerBindAddress          string
+	RaftDataDir              string
+	ForwardTimeout           time.Duration
+	ForwardMaxAttempts       int
+	GossipFanout             int
+	AntiEntropyInterval      time.Duration
+	SWIMProbeInterval        time.Duration
+	SWIMPingTimeout          time.Duration
+	SWIMPingReqTimeout       time.Duration
+	SWIMPingReqCount         int
+	SWIMSuspectTimeout       time.Duration
+	SWIMRetransmitMultiplier int
+	Logger                   *slog.Logger
+}
+
+type grpcRegistrar interface {
+	RegisterGRPC(registrar googlegrpc.ServiceRegistrar)
+}
+
+type metricsRegistrar interface {
+	RegisterMetrics(registerer prometheus.Registerer)
+}
+
+type App struct {
+	backend             registry.Backend
+	healthManager       *registry.HealthManager
+	grpcServer          *grpc.Server
+	metricsRegistry     *metrics.Metrics
+	observabilityServer *observability.Server
+	logger              *slog.Logger
+}
+
+func New(params Params) (*App, error) {
+	backend, err := newBackend(params)
+	if err != nil {
+		return nil, err
+	}
+
+	metricsRegistry := metrics.New("registry", params.NodeID)
+
+	registryManager := registry.NewRegistryManager(backend)
+	healthManager := registry.NewHealthManager(backend, params.TTLMultiplier, params.Logger)
+	watchManager := registry.NewWatchManager(backend)
+	grpcHandler := grpc.NewHandler(registryManager, healthManager, watchManager)
+	var registrations []func(googlegrpc.ServiceRegistrar)
+	if registrar, ok := backend.(grpcRegistrar); ok {
+		registrations = append(registrations, registrar.RegisterGRPC)
+	}
+
+	grpcMetrics := grpc.NewServerMetrics(metricsRegistry.Registerer())
+	grpcServer := grpc.NewServer(params.GRPCBindAddress, grpcHandler, grpcMetrics, params.Logger, registrations...)
+
+	observabilityServer := observability.NewServer(
+		params.ObservabilityBindAddress,
+		metricsRegistry.Handler(),
+		params.Logger,
+	)
+
+	return &App{
+		logger:              params.Logger,
+		backend:             backend,
+		healthManager:       healthManager,
+		grpcServer:          grpcServer,
+		metricsRegistry:     metricsRegistry,
+		observabilityServer: observabilityServer,
+	}, nil
+}
+
+func (a *App) Start(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	observabilityErrs, err := a.observabilityServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve observability server: %w", err)
+	}
+
+	if err := a.backend.Start(ctx); err != nil {
+		return fmt.Errorf("start registry backend: %w", err)
+	}
+
+	if registrar, ok := a.backend.(metricsRegistrar); ok {
+		registrar.RegisterMetrics(a.metricsRegistry.Registerer())
+	}
+
+	grpcErrs, err := a.grpcServer.Serve()
+	if err != nil {
+		return fmt.Errorf("serve registry gRPC server: %w", err)
+	}
+
+	a.healthManager.Start(ctx)
+
+	a.observabilityServer.SetReady(true)
+	a.logger.Info("Registry started")
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-observabilityErrs:
+		return fmt.Errorf("observability server failed: %w", err)
+
+	case err := <-grpcErrs:
+		return fmt.Errorf("registry gRPC server failed: %w", err)
+	}
+}
+
+func (a *App) Shutdown(ctx context.Context) error {
+	defer a.logger.Info("Registry stopped")
+
+	a.observabilityServer.SetReady(false)
+
+	errs := make([]error, 3)
+
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		if err := a.observabilityServer.Shutdown(ctx); err != nil {
+			errs[0] = fmt.Errorf("shutdown observability server: %w", err)
+		}
+	})
+
+	wg.Go(func() {
+		if err := a.grpcServer.Shutdown(ctx); err != nil {
+			errs[1] = fmt.Errorf("shutdown registry gRPC server: %w", err)
+		}
+	})
+
+	wg.Wait()
+
+	backendCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), backendShutdownTimeout)
+	defer cancel()
+
+	if err := a.backend.Shutdown(backendCtx); err != nil {
+		errs[2] = fmt.Errorf("shutdown registry backend: %w", err)
+	}
+
+	return errors.Join(errs...)
+}
+
+func newBackend(params Params) (registry.Backend, error) {
+	switch params.Backend {
+	case "cp":
+		return cp.NewBackend(cp.Config{
+			NodeID:             params.NodeID,
+			BindAddress:        params.PeerBindAddress,
+			DataDir:            params.RaftDataDir,
+			Members:            params.ClusterMembers,
+			ForwardTimeout:     params.ForwardTimeout,
+			ForwardMaxAttempts: params.ForwardMaxAttempts,
+		}), nil
+	case "ap":
+		return ap.NewBackend(ap.Config{
+			NodeID:              params.NodeID,
+			BindAddress:         params.PeerBindAddress,
+			Members:             params.ClusterMembers,
+			GossipFanout:        params.GossipFanout,
+			AntiEntropyInterval: params.AntiEntropyInterval,
+			SWIM: ap.SWIMConfig{
+				ProbeInterval:        params.SWIMProbeInterval,
+				PingTimeout:          params.SWIMPingTimeout,
+				PingReqTimeout:       params.SWIMPingReqTimeout,
+				PingReqCount:         params.SWIMPingReqCount,
+				SuspectTimeout:       params.SWIMSuspectTimeout,
+				RetransmitMultiplier: params.SWIMRetransmitMultiplier,
+			},
+			Logger: params.Logger,
+		}), nil
+	default:
+		return nil, fmt.Errorf("unsupported registry backend %q", params.Backend)
+	}
+}

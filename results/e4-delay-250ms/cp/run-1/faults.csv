@@ -1,0 +1,3 @@
+timestamp_ms,action,target
+1794240852615.881,degrade,delay=250ms loss=0%
+1794240912668.424,restore,

@@ -1,0 +1,2 @@
+{"time":"2026-11-09T19:34:00.430179378Z","level":"INFO","msg":"Load generator started","duration":120000000000,"output_dir":"/results/e4-loss-10pct/ap/run-3"}
+{"time":"2026-11-09T19:36:00.432662464Z","level":"INFO","msg":"Load generator finished"}

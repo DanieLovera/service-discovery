@@ -1,12 +1,13 @@
 /bin/
 /dist/
 /coverage/
+/.venv/
+/results/demo/
 *.coverprofile
 *.out
 *.test
 .env
 .env.*
-!.env.example
 .DS_Store
 .idea/
 .vscode/

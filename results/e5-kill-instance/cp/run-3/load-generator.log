@@ -1,0 +1,2 @@
+{"time":"2026-11-09T19:08:18.269982945Z","level":"INFO","msg":"Load generator started","duration":90000000000,"output_dir":"/results/e5-kill-instance/cp/run-3"}
+{"time":"2026-11-09T19:09:48.270766873Z","level":"INFO","msg":"Load generator finished"}

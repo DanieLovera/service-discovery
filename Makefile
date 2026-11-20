@@ -2,12 +2,15 @@ SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
 GO ?= go
+DEMO_DURATION ?= 20m
 
 .PHONY: help fmt fmt-check vet staticcheck test test-race test-integration quality \
-		docker-up docker-up-debug docker-down docker-ps docker-images docker-clean
+		docker-up docker-up-debug docker-down docker-ps docker-images docker-clean proto \
+		demo-up demo-load
 
 help:
 	@printf '%s\n' \
+		'make proto           	Generate Go code from Protocol Buffer definitions' \
 		'make fmt              	Format Go source files' \
 		'make fmt-check        	Fail if Go source files are not formatted' \
 		'make vet              	Run go vet' \
@@ -19,9 +22,24 @@ help:
 		'make docker-up        	Build and start the Docker Compose environment' \
 		'make docker-up-debug	Build and start the Docker Compose environment with debug tools' \
 		'make docker-down      	Stop and remove the Docker Compose environment' \
-		'make docker-images     Show Docker Compose service images' \		
+		'make docker-images    	Show Docker Compose service images' \
 		'make docker-ps        	Show Docker Compose service status' \
-		'make docker-clean     	Remove Compose containers, local images and volumes'
+		'make docker-clean     	Remove Compose containers, local images and volumes' \
+		'make demo-up          	Start the environment, the load generator image and the fault injector for a demo' \
+		'make demo-load        	Run the load generator for DEMO_DURATION (default 20m), writing to results/demo'
+
+proto:
+	@protoc \
+		--go_out=. \
+		--go_opt=module=tpiii.local/daniel-tpiii \
+		--go-grpc_out=. \
+		--go-grpc_opt=module=tpiii.local/daniel-tpiii \
+		proto/registry.proto \
+		proto/ap/state.proto \
+		proto/ap/swim.proto \
+		proto/ap/anti_entropy.proto \
+		proto/ap/packet.proto \
+		proto/cp/forwarding.proto
 
 fmt:
 	@$(GO) fmt ./...
@@ -58,13 +76,21 @@ docker-up-debug:
 	@docker compose --profile debug up --build -d
 
 docker-down:
-	@docker compose --profile debug down
+	@docker compose --profile debug --profile experiments down
 
 docker-ps:
-	@docker compose --profile debug ps
+	@docker compose --profile debug --profile experiments ps
 
 docker-images:
-	@docker compose --profile debug images
+	@docker compose --profile debug --profile experiments images
 
 docker-clean:
-	@docker compose --profile debug down --rmi local -v
+	@docker compose --profile debug --profile experiments down --rmi local -v
+
+demo-up: docker-up
+	@docker compose --profile experiments build load-generator
+	@docker compose --profile experiments up -d fault-injector
+
+demo-load:
+	@docker compose --profile experiments run --rm --user "$$(id -u):$$(id -g)" \
+		-e DURATION=$(DEMO_DURATION) -e OUTPUT_DIR=/results/demo load-generator

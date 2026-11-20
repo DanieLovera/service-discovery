@@ -1,17 +1,103 @@
+x-registry-addresses: &registry-addresses >-
+  registry-1:7000,
+  registry-2:7000,
+  registry-3:7000,
+  registry-4:7000,
+  registry-5:7000
+
+x-registry-dependencies: &registry-dependencies
+  - registry-1
+  - registry-2
+  - registry-3
+  - registry-4
+  - registry-5
+
+x-registry-environment: &registry-environment
+  BACKEND: ${BACKEND:-cp}
+  CLUSTER_MEMBERS: >-
+    registry-1=registry-1:7000|registry-1:7001,
+    registry-2=registry-2:7000|registry-2:7001,
+    registry-3=registry-3:7000|registry-3:7001,
+    registry-4=registry-4:7000|registry-4:7001,
+    registry-5=registry-5:7000|registry-5:7001
+  GRPC_BIND_ADDRESS: 0.0.0.0:7000
+  OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10000
+  HEARTBEAT_TTL_MULTIPLIER: 3
+  PEER_BIND_ADDRESS: 0.0.0.0:7001
+  RAFT_DATA_DIR: /data/raft
+  FORWARD_TIMEOUT: 2s
+  FORWARD_MAX_ATTEMPTS: 3
+  GOSSIP_FANOUT: 3
+  ANTI_ENTROPY_INTERVAL: 5s
+  SWIM_PROBE_INTERVAL: 1s
+  SWIM_PING_TIMEOUT: 300ms
+  SWIM_PING_REQ_TIMEOUT: 600ms
+  SWIM_PING_REQ_COUNT: 2
+  SWIM_SUSPECT_TIMEOUT: 5s
+  SWIM_RETRANSMIT_MULTIPLIER: 4
+
+x-registry: &registry
+  image: daanilo/registry:dev
+  build:
+    context: .
+    args:
+      SERVICE: registry
+
+x-mock-service-environment: &mock-service-environment
+  REGISTRY_ADDRESSES: *registry-addresses
+  HTTP_BIND_ADDRESS: 0.0.0.0:9000
+  OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10020
+  WEIGHT: 1
+  HEARTBEAT_INTERVAL: 5s
+
+x-mock-service: &mock-service
+  image: daanilo/mock-service:dev
+  build:
+    context: .
+    args:
+      SERVICE: mock-service
+  depends_on: *registry-dependencies
+
 services:
-  registry:
-    image: daanilo/registry:dev
-    build:
-      context: .
-      args:
-        SERVICE: registry
+  registry-1:
+    <<: *registry
     environment:
-      REGISTRY_INSTANCE_ID: registry-1
-      REGISTRY_BACKEND: ap
-      REGISTRY_CLUSTER_MEMBERS: registry:7000
-    ports:
-      - "7000:7000"
-      - "9100:9100"
+      <<: *registry-environment
+      INSTANCE_ID: registry-1
+    volumes:
+      - registry-1-data:/data
+
+  registry-2:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-2
+    volumes:
+      - registry-2-data:/data
+
+  registry-3:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-3
+    volumes:
+      - registry-3-data:/data
+
+  registry-4:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-4
+    volumes:
+      - registry-4-data:/data
+
+  registry-5:
+    <<: *registry
+    environment:
+      <<: *registry-environment
+      INSTANCE_ID: registry-5
+    volumes:
+      - registry-5-data:/data
 
   load-balancer:
     image: daanilo/load-balancer:dev
@@ -20,48 +106,113 @@ services:
       args:
         SERVICE: load-balancer
     environment:
-      LB_REGISTRY_ADDRESSES: registry:7000
+      REGISTRY_ADDRESSES: *registry-addresses
+      SERVICES: service-a:round-robin,service-b:least-connections,service-c:weighted
+      HTTP_BIND_ADDRESS: 0.0.0.0:8000
+      OBSERVABILITY_BIND_ADDRESS: 0.0.0.0:10010
+      REGISTRY_RETRY_INTERVAL: 1s
+      REGISTRY_KEEPALIVE_TIME: 10s
+      REGISTRY_KEEPALIVE_TIMEOUT: 5s
     ports:
-      - "8080:8080"
-      - "9101:9101"
-    depends_on:
-      - registry
+      - "8000:8000"
+    depends_on: *registry-dependencies
 
-  mock-service:
-    image: daanilo/mock-service:dev
+  service-a-1:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-a
+      INSTANCE_ID: service-a-1
+      ADVERTISE_ADDRESS: service-a-1:9000
+
+  service-a-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-a
+      INSTANCE_ID: service-a-2
+      ADVERTISE_ADDRESS: service-a-2:9000
+
+  service-a-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-a
+      INSTANCE_ID: service-a-3
+      ADVERTISE_ADDRESS: service-a-3:9000
+
+  service-b-1:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-b
+      INSTANCE_ID: service-b-1
+      ADVERTISE_ADDRESS: service-b-1:9000
+
+  service-b-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-b
+      INSTANCE_ID: service-b-2
+      ADVERTISE_ADDRESS: service-b-2:9000
+
+  service-b-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-b
+      INSTANCE_ID: service-b-3
+      ADVERTISE_ADDRESS: service-b-3:9000
+
+  service-c-1:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-c
+      INSTANCE_ID: service-c-1
+      ADVERTISE_ADDRESS: service-c-1:9000
+      WEIGHT: 1
+
+  service-c-2:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-c
+      INSTANCE_ID: service-c-2
+      ADVERTISE_ADDRESS: service-c-2:9000
+      WEIGHT: 2
+
+  service-c-3:
+    <<: *mock-service
+    environment:
+      <<: *mock-service-environment
+      NAME: service-c
+      INSTANCE_ID: service-c-3
+      ADVERTISE_ADDRESS: service-c-3:9000
+      WEIGHT: 3
+
+  load-generator:
+    image: daanilo/load-generator:dev
     build:
       context: .
       args:
-        SERVICE: mock-service
+        SERVICE: load-generator
+    profiles: ["experiments"]
     environment:
-      MS_NAME: example-service
-      MS_INSTANCE_ID: mock-service-1
-      MS_REGISTRY_ADDRESSES: registry:7000
-    ports:
-      - "9000:9000"
-      - "9102:9102"
-    depends_on:
-      - registry
-
-  prometheus:
-    image: prom/prometheus:latest
+      REGISTRY_ADDRESSES: *registry-addresses
+      LOAD_BALANCER_URL: http://load-balancer:8000
+      LOAD_BALANCER_SERVICES: service-a,service-b,service-c
+      OUTPUT_DIR: /results
     volumes:
-      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
-    depends_on:
-      - registry
-      - load-balancer
-      - mock-service
+      - ./results:/results
 
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - prometheus
+  fault-injector:
+    image: nicolaka/netshoot:v0.13
+    profiles: ["experiments"]
+    privileged: true
+    pid: host
+    command: ["sh", "-c", "trap 'exit 0' TERM; sleep infinity & wait"]
 
   dozzle:
     image: amir20/dozzle:latest
@@ -70,3 +221,37 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "127.0.0.1:8081:8080"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "8082:3000"
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "8083:9090"
+    depends_on:
+      - load-balancer
+      - service-a-1
+      - service-a-2
+      - service-a-3
+      - service-b-1
+      - service-b-2
+      - service-b-3
+      - service-c-1
+      - service-c-2
+      - service-c-3
+
+volumes:
+  registry-1-data:
+  registry-2-data:
+  registry-3-data:
+  registry-4-data:
+  registry-5-data:

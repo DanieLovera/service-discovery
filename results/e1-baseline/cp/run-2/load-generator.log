@@ -1,0 +1,2 @@
+{"time":"2026-11-09T17:13:30.081928493Z","level":"INFO","msg":"Load generator started","duration":120000000000,"output_dir":"/results/e1-baseline/cp/run-2"}
+{"time":"2026-11-09T17:15:30.083642795Z","level":"INFO","msg":"Load generator finished"}

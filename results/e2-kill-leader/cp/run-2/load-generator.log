@@ -1,0 +1,2 @@
+{"time":"2026-11-09T17:18:20.028528657Z","level":"INFO","msg":"Load generator started","duration":120000000000,"output_dir":"/results/e2-kill-leader/cp/run-2"}
+{"time":"2026-11-09T17:20:20.030452699Z","level":"INFO","msg":"Load generator finished"}

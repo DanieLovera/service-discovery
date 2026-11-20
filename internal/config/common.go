@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+const (
+	defaultRegistryGRPCBindAddress          = "0.0.0.0:7000"
+	defaultRegistryPeerBindAddress          = "0.0.0.0:7001"
+	defaultLBHTTPBindAddress                = "0.0.0.0:8000"
+	defaultMockHTTPBindAddress              = "0.0.0.0:9000"
+	defaultRegistryObservabilityBindAddress = "0.0.0.0:10000"
+	defaultLBObservabilityBindAddress       = "0.0.0.0:10010"
+	defaultMockObservabilityBindAddress     = "0.0.0.0:10020"
+)
+
 func stringFromEnvOrDefault(key, fallback string) string {
 	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		return v

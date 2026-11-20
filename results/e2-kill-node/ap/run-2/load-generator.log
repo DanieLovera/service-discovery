@@ -1,0 +1,2 @@
+{"time":"2026-11-09T17:57:38.362748633Z","level":"INFO","msg":"Load generator started","duration":120000000000,"output_dir":"/results/e2-kill-node/ap/run-2"}
+{"time":"2026-11-09T17:59:38.363865758Z","level":"INFO","msg":"Load generator finished"}

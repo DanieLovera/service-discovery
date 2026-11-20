@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,26 +11,22 @@ import (
 
 	"tpiii.local/daniel-tpiii/internal/config"
 	"tpiii.local/daniel-tpiii/internal/logging"
-	"tpiii.local/daniel-tpiii/internal/metrics"
-	"tpiii.local/daniel-tpiii/internal/observability"
+	"tpiii.local/daniel-tpiii/internal/mock-service/app"
 )
 
 const shutdownTimeout = 5 * time.Second
 
 func main() {
-	if err := run(); err != nil {
+	if err := start(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
+func start() (err error) {
 	cfg, err := config.LoadMockService()
 	if err != nil {
-		return fmt.Errorf("load mock-service configuration: %w", err)
+		return fmt.Errorf("load mock service configuration: %w", err)
 	}
 
 	logger, err := logging.New(cfg.Log)
@@ -37,35 +34,45 @@ func run() error {
 		return fmt.Errorf("initialize logger: %w", err)
 	}
 
-	processMetrics := metrics.New("mock-service", cfg.InstanceID)
-
-	observabilityServer := observability.New(cfg.ObservabilityAddress, processMetrics.Handler(), logger)
-	go func() {
-		if err := observabilityServer.Start(); err != nil {
-			logger.Error("Observability server stopped", "error", err)
-		}
-	}()
-	observabilityServer.SetReady(true)
-
-	logger.Info(
-		"Mock Service process started",
-		"service_name", cfg.ServiceName,
-		"instance_id", cfg.InstanceID,
-		"http_address", cfg.HTTPAddress,
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
 	)
+	defer stop()
 
-	<-signalCtx.Done()
-
-	logger.Info("Mock Service process stopping")
-
-	observabilityServer.SetReady(false)
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	if err := observabilityServer.Shutdown(shutdownCtx); err != nil {
-		return err
+	application, err := app.New(app.Params{
+		ServiceName:              cfg.ServiceName,
+		InstanceID:               cfg.InstanceID,
+		HTTPBindAddress:          cfg.HTTPBindAddress,
+		AdvertiseAddress:         cfg.AdvertiseAddress,
+		ObservabilityBindAddress: cfg.ObservabilityBindAddress,
+		RegistryAddresses:        cfg.RegistryAddresses,
+		Weight:                   cfg.Weight,
+		HeartbeatInterval:        cfg.HeartbeatInterval,
+		Logger:                   logger,
+	})
+	if err != nil {
+		return fmt.Errorf("initialize mock service application: %w", err)
 	}
 
-	logger.Info("Mock Service process stopped")
+	defer func() {
+		err = errors.Join(err, shutdown(application))
+	}()
+
+	if err := application.Start(ctx); err != nil {
+		return fmt.Errorf("start mock service application: %w", err)
+	}
+
 	return nil
+}
+
+func shutdown(application *app.App) error {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		shutdownTimeout,
+	)
+	defer cancel()
+
+	return application.Shutdown(ctx)
 }
