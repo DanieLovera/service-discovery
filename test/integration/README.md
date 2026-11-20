@@ -8,7 +8,8 @@ These tests start real project components inside the test process: 3-node regist
 - `cp_test.go`: writes read from every node right away, leader failover, and a minority that refuses operations
   until the majority returns.
 - `ap_test.go`: availability without a majority, state sync of a restarted node before it serves, convergence of
-  concurrent updates, and SWIM failure detection.
+  concurrent updates, mock services registering again after the cluster loses its state, and SWIM failure
+  detection.
 - `load_balancer_test.go`: end-to-end routing through the load balancer to mock services, and routing that
   continues while registry nodes fail.
 - `cluster_test.go`: shared helpers to start, stop and query the processes.

@@ -85,6 +85,23 @@ func TestAPConcurrentUpdatesConverge(t *testing.T) {
 	})
 }
 
+func TestAPMockServiceRegistersAgainAfterClusterLosesState(t *testing.T) {
+	c := newCluster(t, "ap", 3)
+
+	startMockService(t, "a1", c.addresses())
+	c.waitVisible("service-a", "a1")
+
+	for i := range c.nodes {
+		c.stop(i)
+	}
+
+	for i := range c.nodes {
+		c.start(i)
+	}
+
+	c.waitVisible("service-a", "a1")
+}
+
 func TestAPFailureDetectorConfirmsAndReadmitsNode(t *testing.T) {
 	c := newCluster(t, "ap", 3)
 	observer := c.nodes[0]
